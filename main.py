@@ -8,14 +8,206 @@ from PySide6.QtCore import QDateTime, Qt, QSize
 import sys
 from database import Database
 import config_manager
+import darkdetect
 
-qss_style = '''
-QMainWindow { background-color: #f0f0f0; }
-QTabWidget::pane { border: 1px solid #cccccc; background: white; }
-QTabBar::tab { background: #e0e0e0; border: 1px solid #cccccc; padding: 10px; }
-QTabBar::tab:selected { background: #ffffff; font-weight: bold; }
-QListWidget, QTextEdit { background: #ffffff; border: 1px solid #cccccc; }
+light_qss = '''
+/* Ant Design - Light Theme */
+QWidget {
+    background-color: #f0f2f5;
+    color: rgba(0, 0, 0, 0.85);
+    font-size: 14px;
+}
+QMainWindow, QDialog {
+    background-color: #f0f2f5;
+}
+QLabel {
+    background-color: transparent;
+}
+QLineEdit, QComboBox, QDateTimeEdit, QTextEdit {
+    background-color: #ffffff;
+    border: 1px solid #d9d9d9;
+    border-radius: 2px;
+    padding: 8px;
+}
+QLineEdit:focus, QComboBox:focus, QDateTimeEdit:focus, QTextEdit:focus {
+    border-color: #40a9ff;
+}
+QListWidget {
+    background-color: #ffffff;
+    border: 1px solid #d9d9d9;
+    border-radius: 2px;
+}
+QListWidget::item {
+    padding: 8px 12px;
+}
+QListWidget::item:hover {
+    background-color: #e6f7ff;
+}
+QListWidget::item:selected {
+    background-color: #bae7ff;
+    color: rgba(0, 0, 0, 0.85);
+}
+QComboBox QAbstractItemView {
+    background-color: #ffffff;
+    color: rgba(0, 0, 0, 0.85);
+    border: 1px solid #d9d9d9;
+    border-radius: 2px;
+    padding: 4px;
+    outline: 0px;
+}
+QComboBox QAbstractItemView::item {
+    padding: 8px 12px;
+}
+QComboBox QAbstractItemView::item:hover {
+    background-color: #e6f7ff;
+}
+QComboBox QAbstractItemView::item:selected {
+    background-color: #1890ff;
+    color: #ffffff;
+}
+QPushButton {
+    background-color: #1890ff;
+    color: #ffffff;
+    border: 1px solid #1890ff;
+    border-radius: 2px;
+    padding: 8px 15px;
+    font-weight: 500;
+}
+QPushButton:hover {
+    background-color: #40a9ff;
+    border-color: #40a9ff;
+}
+QPushButton:pressed {
+    background-color: #096dd9;
+    border-color: #096dd9;
+}
+QTabWidget::pane {
+    border-top: 1px solid #f0f0f0;
+}
+QTabBar::tab {
+    background: transparent;
+    color: rgba(0, 0, 0, 0.85);
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 16px;
+    margin-right: 16px;
+}
+QTabBar::tab:hover {
+    color: #40a9ff;
+}
+QTabBar::tab:selected {
+    color: #096dd9;
+    border-bottom: 2px solid #096dd9;
+}
 '''
+
+dark_qss = '''
+/* Ant Design - Dark Theme */
+QWidget {
+    background-color: #1f1f1f;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 14px;
+}
+QMainWindow, QDialog {
+    background-color: #1f1f1f;
+}
+QLabel {
+    background-color: transparent;
+}
+QLineEdit, QComboBox, QDateTimeEdit, QTextEdit {
+    background-color: #141414;
+    border: 1px solid #434343;
+    border-radius: 2px;
+    padding: 8px;
+}
+QLineEdit:focus, QComboBox:focus, QDateTimeEdit:focus, QTextEdit:focus {
+    border-color: #096dd9;
+}
+QListWidget {
+    background-color: #141414;
+    border: 1px solid #434343;
+    border-radius: 2px;
+}
+QListWidget::item {
+    padding: 8px 12px;
+}
+QListWidget::item:hover {
+    background-color: #2a2a2a;
+}
+QListWidget::item:selected {
+    background-color: #112a45;
+    color: rgba(255, 255, 255, 0.85);
+}
+QComboBox QAbstractItemView {
+    background-color: #141414;
+    color: rgba(255, 255, 255, 0.85);
+    border: 1px solid #434343;
+    border-radius: 2px;
+    padding: 4px;
+    outline: 0px;
+}
+QComboBox QAbstractItemView::item {
+    padding: 8px 12px;
+}
+QComboBox QAbstractItemView::item:hover {
+    background-color: #2a2a2a;
+}
+QComboBox QAbstractItemView::item:selected {
+    background-color: #177ddc;
+    color: #ffffff;
+}
+QPushButton {
+    background-color: #096dd9;
+    color: #ffffff;
+    border: 1px solid #096dd9;
+    border-radius: 2px;
+    padding: 8px 15px;
+    font-weight: 500;
+}
+QPushButton:hover {
+    background-color: #177ddc;
+    border-color: #177ddc;
+}
+QPushButton:pressed {
+    background-color: #0050b3;
+    border-color: #0050b3;
+}
+QTabWidget::pane {
+    border-top: 1px solid #303030;
+}
+QTabBar::tab {
+    background: transparent;
+    color: rgba(255, 255, 255, 0.85);
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 16px;
+    margin-right: 16px;
+}
+QTabBar::tab:hover {
+    color: #177ddc;
+}
+QTabBar::tab:selected {
+    color: #096dd9;
+    border-bottom: 2px solid #096dd9;
+}
+'''
+
+def adjust_combo_box_width(combo_box):
+    """
+    콤보박스의 드롭다운 목록 너비를 가장 긴 항목에 맞게 조절하고,
+    약간의 여백을 추가합니다.
+    """
+    max_width = 0
+    font_metrics = combo_box.view().fontMetrics()
+    for i in range(combo_box.count()):
+        text = combo_box.itemText(i)
+        width = font_metrics.horizontalAdvance(text)
+        if width > max_width:
+            max_width = width
+    
+    # 텍스트 양 옆으로 여백(padding)을 추가합니다.
+    padding = 15
+    combo_box.view().setMinimumWidth(max_width + padding)
 
 class EditCounselDialog(QDialog):
     def __init__(self, record, parent=None):
@@ -186,19 +378,19 @@ class MainApp(QMainWindow):
         info_form = QFormLayout(info_group)
         self.phone_edit = QLineEdit()
         self.gender_edit = QComboBox()
+        self.gender_edit.setEditable(True)
         self.gender_edit.addItems(['남자', '여자', '기타'])
+        self.gender_edit.setMinimumWidth(100)
+        adjust_combo_box_width(self.gender_edit)
         self.birth_edit = QDateTimeEdit()
         self.birth_edit.setDateTime(QDateTime.currentDateTime())
         self.birth_edit.setDisplayFormat("yyyy-MM-dd")
         self.birth_edit.setCalendarPopup(True)
         self.name_edit = QLineEdit()
-        self.format_edit = QComboBox()
-        self.format_edit.addItems(['일반(결혼)', '이혼', '재혼', '별거', '동거', '새터민', '다문화', '한부모', '조손', '기타'])
-        self.welfare_edit = QComboBox()
-        self.welfare_edit.addItems(['일반세대', '국민기초생활수급자', '차상위계층', '저소득층', '장애세대', '독거노인', '국가유공자'])
         self.family_phone_edit1 = QLineEdit()
         self.family_phone_edit2 = QLineEdit()
         self.memo_edit = QTextEdit()
+        self.memo_edit.setMinimumHeight(160)
         self.memo_edit.setAcceptRichText(False)
         self.memo_edit.setPlaceholderText("학생에 관한 메모를 입력하세요.")
         btn_save_info = QPushButton("학생 정보 저장")
@@ -210,8 +402,6 @@ class MainApp(QMainWindow):
         info_form.addRow("연락처", self.phone_edit)
         info_form.addRow(QLabel(""))
         info_form.addRow(QLabel("가족 정보"))
-        info_form.addRow("가정형태", self.format_edit)
-        info_form.addRow("보호구분", self.welfare_edit)
         info_form.addRow("보호자 연락처1", self.family_phone_edit1)
         info_form.addRow("보호자 연락처2", self.family_phone_edit2)
         info_form.addRow(QLabel(""))
@@ -253,8 +443,6 @@ class MainApp(QMainWindow):
         self.phone_edit.clear()
         self.gender_edit.setCurrentIndex(-1)
         self.birth_edit.setDateTime(QDateTime.currentDateTime())
-        self.format_edit.setCurrentIndex(-1)
-        self.welfare_edit.setCurrentIndex(-1)
         self.family_phone_edit1.clear()
         self.family_phone_edit2.clear()
         self.memo_edit.clear()
@@ -275,10 +463,6 @@ class MainApp(QMainWindow):
             self.birth_edit.setDateTime(QDateTime.fromString(info['생년월일'], "yyyy-MM-dd"))
         if info.get('연락처'):
             self.phone_edit.setText(info['연락처'])
-        if info.get('가정형태'):
-            self.format_edit.setCurrentText(info['가정형태'])
-        if info.get('보호구분'):
-            self.welfare_edit.setCurrentText(info['보호구분'])
         if info.get('보호자 연락처1'):
             self.family_phone_edit1.setText(info['보호자 연락처1'])
         if info.get('보호자 연락처2'):
@@ -321,8 +505,6 @@ class MainApp(QMainWindow):
             '성별': self.gender_edit.currentText(),
             '생년월일': self.birth_edit.dateTime().toString("yyyy-MM-dd"),
             '연락처': self.phone_edit.text(),
-            '가정형태': self.format_edit.currentText(),
-            '보호구분': self.welfare_edit.currentText(),
             '보호자 연락처1': self.family_phone_edit1.text(),
             '보호자 연락처2': self.family_phone_edit2.text(),
             '메모': self.memo_edit.toPlainText()
@@ -436,13 +618,16 @@ class MainApp(QMainWindow):
         layout.addWidget(QLabel('학생 이름'))
         self.name_combo = QComboBox()
         self.name_combo.setEditable(True)
+        self.name_combo.setMaximumWidth(200)
         self.name_combo.addItems(self.db.get_all_students())
         layout.addWidget(self.name_combo)
 
         # 상담 대상
         layout.addWidget(QLabel('상담 대상'))
         self.target_combo = QComboBox()
+        self.target_combo.setEditable(True)
         self.target_combo.addItems(['학생 본인', '보호자', '친구', '기타'])
+        self.target_combo.setMaximumWidth(200)
         layout.addWidget(self.target_combo)
         
         # 상담 일시 선택
@@ -450,12 +635,15 @@ class MainApp(QMainWindow):
         self.datetime_edit = QDateTimeEdit()
         self.datetime_edit.setDateTime(QDateTime.currentDateTime())
         self.datetime_edit.setDisplayFormat("yyyy-MM-dd HH:mm")
+        self.datetime_edit.setMaximumWidth(200)
         self.datetime_edit.setCalendarPopup(True)
         layout.addWidget(self.datetime_edit)
         
         # 상담 방법 선택
         layout.addWidget(QLabel('상담 방법'))
         self.method_combo = QComboBox()
+        self.method_combo.setEditable(True)
+        self.method_combo.setMaximumWidth(200)
         self.method_combo.addItems(['대면', '전화', '온라인'])
         layout.addWidget(self.method_combo)
         
@@ -536,7 +724,11 @@ class MainApp(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    app.setStyleSheet(qss_style)
+    
+    if darkdetect.isDark():
+        app.setStyleSheet(dark_qss)
+    else:
+        app.setStyleSheet(light_qss)
 
     db = None
     if not config_manager.is_password_set():

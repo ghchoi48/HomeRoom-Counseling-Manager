@@ -46,8 +46,6 @@ class Database:
             phone TEXT,
             gender TEXT,
             birth_date TEXT,
-            family_type TEXT,
-            protection_type TEXT,
             guardian_phone1 TEXT,
             guardian_phone2 TEXT,
             memo TEXT,
@@ -84,16 +82,14 @@ class Database:
         try:
             cursor.execute('''
             INSERT INTO students (
-                name, phone, gender, birth_date, family_type, 
-                protection_type, guardian_phone1, guardian_phone2, memo
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                name, phone, gender, birth_date, 
+                guardian_phone1, guardian_phone2, memo
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
             ''', (
                 name,
                 info.get('연락처', ''),
                 info.get('성별', ''),
                 info.get('생년월일', ''),
-                info.get('가정형태', ''),
-                info.get('보호구분', ''),
                 info.get('보호자 연락처1', ''),
                 info.get('보호자 연락처2', ''),
                 info.get('메모', '')
@@ -116,8 +112,6 @@ class Database:
                 phone = ?,
                 gender = ?,
                 birth_date = ?,
-                family_type = ?,
-                protection_type = ?,
                 guardian_phone1 = ?,
                 guardian_phone2 = ?,
                 memo = ?,
@@ -127,8 +121,6 @@ class Database:
                 info.get('연락처', ''),
                 info.get('성별', ''),
                 info.get('생년월일', ''),
-                info.get('가정형태', ''),
-                info.get('보호구분', ''),
                 info.get('보호자 연락처1', ''),
                 info.get('보호자 연락처2', ''),
                 info.get('메모', ''),
@@ -158,8 +150,8 @@ class Database:
         cursor = conn.cursor()
         
         cursor.execute('''
-        SELECT name, phone, gender, birth_date, family_type, 
-               protection_type, guardian_phone1, guardian_phone2, memo
+        SELECT name, phone, gender, birth_date, 
+               guardian_phone1, guardian_phone2, memo
         FROM students WHERE name = ?
         ''', (name,))
         
@@ -171,11 +163,9 @@ class Database:
                 '연락처': row[1],
                 '성별': row[2],
                 '생년월일': row[3],
-                '가정형태': row[4],
-                '보호구분': row[5],
-                '보호자 연락처1': row[6],
-                '보호자 연락처2': row[7],
-                '메모': row[8]
+                '보호자 연락처1': row[4],
+                '보호자 연락처2': row[5],
+                '메모': row[6]
             }
         return None
 
