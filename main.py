@@ -1,9 +1,10 @@
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout,
     QListWidget, QTextEdit, QPushButton, QInputDialog, QMessageBox, QLabel,
-    QComboBox, QDateTimeEdit, QLineEdit, QFormLayout, QDialog, QDialogButtonBox
+    QComboBox, QDateTimeEdit, QLineEdit, QFormLayout, QDialog, QDialogButtonBox,
+    QListWidgetItem
 )
-from PySide6.QtCore import QDateTime
+from PySide6.QtCore import QDateTime, Qt, QSize
 import sys
 from database import Database
 import config_manager
@@ -15,6 +16,50 @@ QTabBar::tab { background: #e0e0e0; border: 1px solid #cccccc; padding: 10px; }
 QTabBar::tab:selected { background: #ffffff; font-weight: bold; }
 QListWidget, QTextEdit { background: #ffffff; border: 1px solid #cccccc; }
 '''
+
+class EditCounselDialog(QDialog):
+    def __init__(self, record, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle('상담기록 수정')
+
+        layout = QVBoxLayout(self)
+        form_layout = QFormLayout()
+
+        self.datetime_edit = QDateTimeEdit()
+        self.datetime_edit.setDateTime(QDateTime.fromString(record['일시'], "yyyy-MM-dd HH:mm"))
+        self.datetime_edit.setDisplayFormat("yyyy-MM-dd HH:mm")
+        self.datetime_edit.setCalendarPopup(True)
+
+        self.target_combo = QComboBox()
+        self.target_combo.addItems(['학생 본인', '보호자', '친구', '기타'])
+        self.target_combo.setCurrentText(record['대상'])
+
+        self.method_combo = QComboBox()
+        self.method_combo.addItems(['대면', '전화', '온라인'])
+        self.method_combo.setCurrentText(record['방법'])
+
+        self.counsel_input = QTextEdit()
+        self.counsel_input.setText(record['내용'])
+        
+        form_layout.addRow('상담 일시', self.datetime_edit)
+        form_layout.addRow('상담 대상', self.target_combo)
+        form_layout.addRow('상담 방법', self.method_combo)
+        form_layout.addRow('상담 내용', self.counsel_input)
+        
+        self.buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel, self)
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+
+        layout.addLayout(form_layout)
+        layout.addWidget(self.buttons)
+
+    def get_data(self):
+        return {
+            '일시': self.datetime_edit.dateTime().toString("yyyy-MM-dd HH:mm"),
+            '대상': self.target_combo.currentText(),
+            '방법': self.method_combo.currentText(),
+            '내용': self.counsel_input.toPlainText().strip()
+        }
 
 class PasswordDialogBase(QDialog):
     def __init__(self, parent=None):
@@ -98,7 +143,8 @@ class MainApp(QMainWindow):
     def __init__(self, db):
         super().__init__()
         self.setWindowTitle('담임교사용 상담일지')
-        self.setGeometry(100, 100, 900, 600)
+        self.setGeometry(100, 100, 900, 700)
+        self.setFixedSize(QSize(900, 700))
         
         # 데이터베이스 설정
         self.db = db
@@ -123,6 +169,7 @@ class MainApp(QMainWindow):
         left_layout = QVBoxLayout()
         self.student_list = QListWidget()
         self.student_list.addItems(self.db.get_all_students())
+        left_layout.addWidget(QLabel("학생 목록"))
         left_layout.addWidget(self.student_list)
         
         btn_add = QPushButton('학생 추가')
@@ -182,8 +229,14 @@ class MainApp(QMainWindow):
         right_layout.addWidget(QLabel("상담 기록"))
         self.counsel_record_list = QListWidget()
         right_layout.addWidget(self.counsel_record_list)
+        
+        buttons_layout = QHBoxLayout()
+        btn_edit_record = QPushButton('상담기록 수정')
         btn_del_record = QPushButton('상담기록 삭제')
-        right_layout.addWidget(btn_del_record)
+        buttons_layout.addWidget(btn_edit_record)
+        buttons_layout.addWidget(btn_del_record)
+
+        right_layout.addLayout(buttons_layout)
         layout.addLayout(right_layout, 3)
         
         # 신호 연결
@@ -191,6 +244,7 @@ class MainApp(QMainWindow):
         btn_add.clicked.connect(self.add_student)
         btn_del.clicked.connect(self.delete_student)
         btn_save_info.clicked.connect(self.save_student_info)
+        btn_edit_record.clicked.connect(self.edit_counsel_record)
         btn_del_record.clicked.connect(self.delete_counsel_record)
 
     def display_student_info_and_counsel(self, student_name):
@@ -242,7 +296,9 @@ class MainApp(QMainWindow):
         self.counsel_record_list.setEnabled(True)
         for rec in records:
             summary = f"[{rec['일시']}] ({rec['대상']}, {rec['방법']}) \n {rec['내용']} \n"
-            self.counsel_record_list.addItem(summary)
+            item = QListWidgetItem(summary)
+            item.setData(Qt.UserRole, rec['id'])
+            self.counsel_record_list.addItem(item)
 
     def save_student_info(self):
         current_item = self.student_list.currentItem()
@@ -289,6 +345,36 @@ class MainApp(QMainWindow):
         self.refresh_student_list()
         QMessageBox.information(self, "저장 완료", "학생 정보가 저장되었습니다.")
 
+    def edit_counsel_record(self):
+        student_name = self.student_list.currentItem().text() if self.student_list.currentItem() else None
+        if not student_name:
+            QMessageBox.warning(self, "선택 오류", "학생을 선택하세요.")
+            return
+        
+        current_item = self.counsel_record_list.currentItem()
+        if not current_item or not current_item.data(Qt.UserRole):
+            QMessageBox.warning(self, "선택 오류", "수정할 상담기록을 선택하세요.")
+            return
+
+        record_id = current_item.data(Qt.UserRole)
+        record_to_edit = self.db.get_counsel_record(record_id)
+        if not record_to_edit:
+            QMessageBox.critical(self, "오류", "상담기록을 불러오지 못했습니다.")
+            return
+
+        dialog = EditCounselDialog(record_to_edit, self)
+        if dialog.exec():
+            updated_data = dialog.get_data()
+            if not updated_data['내용']:
+                QMessageBox.warning(self, "입력 오류", "상담 내용을 입력하세요.")
+                return
+
+            if self.db.update_counsel_record(record_id, updated_data):
+                QMessageBox.information(self, "성공", "상담기록이 수정되었습니다.")
+                self.display_student_info_and_counsel(student_name)
+            else:
+                QMessageBox.critical(self, "오류", "상담기록 수정에 실패했습니다.")
+
     def delete_counsel_record(self):
         student_name = self.student_list.currentItem().text() if self.student_list.currentItem() else None
         if not student_name:
@@ -296,19 +382,18 @@ class MainApp(QMainWindow):
             return
         
         current_item = self.counsel_record_list.currentItem()
-        if not current_item:
+        if not current_item or not current_item.data(Qt.UserRole):
             QMessageBox.warning(self, "선택 오류", "삭제할 상담기록을 선택하세요.")
             return
             
-        text = current_item.text()
-        datetime_str = text[1:text.find(']')]  # '[2023-05-10 10:00]' 형식에서 날짜 추출
+        record_id = current_item.data(Qt.UserRole)
         
         reply = QMessageBox.question(
             self, '상담기록 삭제', "선택한 상담기록을 삭제하시겠습니까?",
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No
         )
         if reply == QMessageBox.Yes:
-            if self.db.delete_counsel_record(student_name, datetime_str):
+            if self.db.delete_counsel_record_by_id(record_id):
                 self.display_student_info_and_counsel(student_name)
 
     def add_student(self):

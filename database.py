@@ -218,12 +218,12 @@ class Database:
             conn.close()
 
     def get_counsel_records(self, student_name):
-        """학생의 상담 기록 조회"""
+        """학생의 상담 기록 조회 (ID 포함)"""
         conn = self.get_connection()
         cursor = conn.cursor()
         
         cursor.execute('''
-        SELECT counsel_date, target, method, content
+        SELECT cr.id, counsel_date, target, method, content
         FROM counseling_records cr
         JOIN students s ON cr.student_id = s.id
         WHERE s.name = ?
@@ -233,28 +233,79 @@ class Database:
         records = []
         for row in cursor.fetchall():
             records.append({
-                '일시': row[0],
-                '대상': row[1],
-                '방법': row[2],
-                '내용': row[3]
+                'id': row[0],
+                '일시': row[1],
+                '대상': row[2],
+                '방법': row[3],
+                '내용': row[4]
             })
         
         conn.close()
         return records
 
-    def delete_counsel_record(self, student_name, record_datetime):
-        """상담 기록 삭제"""
+    def get_counsel_record(self, record_id):
+        """ID로 특정 상담 기록 조회"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+        SELECT id, counsel_date, target, method, content
+        FROM counseling_records
+        WHERE id = ?
+        ''', (record_id,))
+        
+        row = cursor.fetchone()
+        conn.close()
+
+        if row:
+            return {
+                'id': row[0],
+                '일시': row[1],
+                '대상': row[2],
+                '방법': row[3],
+                '내용': row[4]
+            }
+        return None
+
+    def update_counsel_record(self, record_id, record_data):
+        """상담 기록 업데이트"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute('''
+            UPDATE counseling_records SET
+                counsel_date = ?,
+                target = ?,
+                method = ?,
+                content = ?
+            WHERE id = ?
+            ''', (
+                record_data['일시'],
+                record_data['대상'],
+                record_data['방법'],
+                record_data['내용'],
+                record_id
+            ))
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"상담 기록 업데이트 오류: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def delete_counsel_record_by_id(self, record_id):
+        """ID로 상담 기록 삭제"""
         conn = self.get_connection()
         cursor = conn.cursor()
         
         try:
-            cursor.execute('''
-            DELETE FROM counseling_records 
-            WHERE student_id = (SELECT id FROM students WHERE name = ?)
-            AND counsel_date = ?
-            ''', (student_name, record_datetime))
-            
+            cursor.execute('DELETE FROM counseling_records WHERE id = ?', (record_id,))
             conn.commit()
             return cursor.rowcount > 0
+        except Exception as e:
+            print(f"ID로 상담 기록 삭제 오류: {e}")
+            return False
         finally:
             conn.close() 
