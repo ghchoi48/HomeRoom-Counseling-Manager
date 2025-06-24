@@ -24,6 +24,7 @@
 -   데이터는 Sqlite3 DB로 보관되며, 실행파일이 위치한 폴더의 counseling.db에 저장됨
 -   DB는 암호화되지 않고 접근 제한이 없으므로 보안에 유의하여야 함
 -   암호는 비문화(SHA-256) 되어 settings.ini에 저장됨
+-   암호 변경은 프로그램 정보탭에서 가능함
 
 ### Trouble Shooting
 
