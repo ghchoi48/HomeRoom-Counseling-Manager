@@ -16,4 +16,4 @@
 
 # Trouble Shooting
 - 프로그램 실행에 필요한 암호를 잊어버렸다면, settings.ini파일을 삭제하여 암호를 초기화 할 수 있음
-- 
+- counseling.db 파일을 주기적으로 백업하여 데이터 유실을 방지하기를 권장함
