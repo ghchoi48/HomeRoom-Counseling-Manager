@@ -192,23 +192,6 @@ QTabBar::tab:selected {
 }
 '''
 
-def adjust_combo_box_width(combo_box):
-    """
-    콤보박스의 드롭다운 목록 너비를 가장 긴 항목에 맞게 조절하고,
-    약간의 여백을 추가합니다.
-    """
-    max_width = 0
-    font_metrics = combo_box.view().fontMetrics()
-    for i in range(combo_box.count()):
-        text = combo_box.itemText(i)
-        width = font_metrics.horizontalAdvance(text)
-        if width > max_width:
-            max_width = width
-    
-    # 텍스트 양 옆으로 여백(padding)을 추가합니다.
-    padding = 15
-    combo_box.view().setMinimumWidth(max_width + padding)
-
 class EditCounselDialog(QDialog):
     def __init__(self, record, parent=None):
         super().__init__(parent)
@@ -223,10 +206,14 @@ class EditCounselDialog(QDialog):
         self.datetime_edit.setCalendarPopup(True)
 
         self.target_combo = QComboBox()
+        self.target_combo.setEditable(True)
+        self.target_combo.setMinimumWidth(200)
         self.target_combo.addItems(['학생 본인', '보호자', '친구', '기타'])
         self.target_combo.setCurrentText(record['대상'])
 
         self.method_combo = QComboBox()
+        self.method_combo.setEditable(True)
+        self.method_combo.setMinimumWidth(200)
         self.method_combo.addItems(['대면', '전화', '온라인'])
         self.method_combo.setCurrentText(record['방법'])
 
@@ -381,7 +368,6 @@ class MainApp(QMainWindow):
         self.gender_edit.setEditable(True)
         self.gender_edit.addItems(['남자', '여자', '기타'])
         self.gender_edit.setMinimumWidth(100)
-        adjust_combo_box_width(self.gender_edit)
         self.birth_edit = QDateTimeEdit()
         self.birth_edit.setDateTime(QDateTime.currentDateTime())
         self.birth_edit.setDisplayFormat("yyyy-MM-dd")
