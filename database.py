@@ -1,8 +1,20 @@
 import sqlite3
 from datetime import datetime
+import os
+import sys
+
+def get_base_dir():
+    if getattr(sys, 'frozen', False):
+        return os.path.dirname(sys.executable)
+    else:
+        return os.path.dirname(os.path.abspath(__file__))
+
+BASE_DIR = get_base_dir()
 
 class Database:
-    def __init__(self, db_file="counseling.db"):
+    def __init__(self, db_file=None):
+        if db_file is None:
+            db_file = os.path.join(BASE_DIR, 'counseling.db')
         self.db_file = db_file
         self.init_database()
 

@@ -1,8 +1,16 @@
 import configparser
 import os
 import hashlib
+import sys
 
-CONFIG_FILE = 'settings.ini'
+def get_base_dir():
+    if getattr(sys, 'frozen', False):
+        return os.path.dirname(sys.executable)
+    else:
+        return os.path.dirname(os.path.abspath(__file__))
+
+BASE_DIR = get_base_dir()
+CONFIG_FILE = os.path.join(BASE_DIR, 'settings.ini')
 PASSWORD_SECTION = 'security'
 PASSWORD_OPTION = 'password'
 

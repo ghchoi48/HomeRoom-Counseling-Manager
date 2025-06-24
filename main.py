@@ -432,19 +432,22 @@ class MainApp(QMainWindow):
                 QMessageBox.critical(self, '오류', '암호 변경에 실패했습니다.')
 
     def init_credit_tab(self):
-        layout = QVBoxLayout()
+        layout = QHBoxLayout()
         self.credit_tab.setLayout(layout)
 
-        layout.addWidget(QLabel('프로그램명: 담임교사용 상담일지 프로그램'))
-        layout.addWidget(QLabel('만든이: 경상북도교육청 전문상담교사 최규호'))
-        layout.addWidget(QLabel('라이센스: MIT Lisence'))
+        left_layout = QVBoxLayout()
+        left_layout.addWidget(QLabel('프로그램명: 담임교사용 상담일지 프로그램\n만든이: 경상북도교육청 전문상담교사 최규호\n라이센스: MIT Lisence'))
         github_label = QLabel('Github: <a href="https://github.com/ghchoi48/HomeRoom-Counseling-Manager">https://github.com/ghchoi48/HomeRoom-Counseling-Manager</a>')
         github_label.setOpenExternalLinks(True)
-        layout.addWidget(github_label)
-        
+        left_layout.addWidget(github_label)
         change_password_btn = QPushButton("암호 변경")
         change_password_btn.clicked.connect(self.change_password)
-        layout.addWidget(change_password_btn)
+        left_layout.addWidget(QLabel("암호를 잊었을 경우에는 settings.ini 파일을 삭제하세요.\n자료 보존을 위해 counseling.db 파일은 주기적으로 백업하세요."))
+        left_layout.addWidget(change_password_btn)
+        layout.addLayout(left_layout, 1)
+        
+        right_layout = QVBoxLayout()
+        layout.addLayout(right_layout, 1)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
