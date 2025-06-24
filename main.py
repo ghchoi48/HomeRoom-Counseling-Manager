@@ -334,7 +334,7 @@ class ChangePasswordDialog(PasswordDialogBase):
 class MainApp(QMainWindow):
     def __init__(self, db):
         super().__init__()
-        self.setWindowTitle('담임교사용 상담일지')
+        self.setWindowTitle('HomeRoom Counseling Manager')
         self.setGeometry(100, 100, 900, 700)
         self.setFixedSize(QSize(900, 700))
         
