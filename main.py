@@ -1,11 +1,12 @@
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout,
     QListWidget, QTextEdit, QPushButton, QInputDialog, QMessageBox, QLabel,
-    QComboBox, QDateTimeEdit, QLineEdit, QFormLayout
+    QComboBox, QDateTimeEdit, QLineEdit, QFormLayout, QDialog, QDialogButtonBox
 )
 from PySide6.QtCore import QDateTime
 import sys
 from database import Database
+import config
 
 qss_style = '''
 QMainWindow { background-color: #f0f0f0; }
@@ -15,14 +16,92 @@ QTabBar::tab:selected { background: #ffffff; font-weight: bold; }
 QListWidget, QTextEdit { background: #ffffff; border: 1px solid #cccccc; }
 '''
 
+class PasswordDialogBase(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.layout = QVBoxLayout(self)
+        self.form_layout = QFormLayout()
+        
+        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, self)
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+
+        self.layout.addLayout(self.form_layout)
+        self.layout.addWidget(self.buttons)
+
+class CreatePasswordDialog(PasswordDialogBase):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle('새 암호 생성')
+        self.password_edit = QLineEdit()
+        self.password_edit.setEchoMode(QLineEdit.Password)
+        self.confirm_edit = QLineEdit()
+        self.confirm_edit.setEchoMode(QLineEdit.Password)
+        
+        self.form_layout.addRow('새 암호:', self.password_edit)
+        self.form_layout.addRow('암호 확인:', self.confirm_edit)
+
+    def accept(self):
+        if self.password_edit.text() == self.confirm_edit.text():
+            if len(self.password_edit.text()) < 4:
+                QMessageBox.warning(self, '오류', '암호는 4자 이상이어야 합니다.')
+                return
+            super().accept()
+        else:
+            QMessageBox.warning(self, '오류', '암호가 일치하지 않습니다.')
+
+    def get_password(self):
+        return self.password_edit.text()
+
+class PasswordDialog(PasswordDialogBase):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle('암호 입력')
+        self.password_edit = QLineEdit()
+        self.password_edit.setEchoMode(QLineEdit.Password)
+        self.form_layout.addRow('암호:', self.password_edit)
+
+    def get_password(self):
+        return self.password_edit.text()
+
+class ChangePasswordDialog(PasswordDialogBase):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle('암호 변경')
+        self.old_password_edit = QLineEdit()
+        self.old_password_edit.setEchoMode(QLineEdit.Password)
+        self.new_password_edit = QLineEdit()
+        self.new_password_edit.setEchoMode(QLineEdit.Password)
+        self.confirm_edit = QLineEdit()
+        self.confirm_edit.setEchoMode(QLineEdit.Password)
+
+        self.form_layout.addRow('기존 암호:', self.old_password_edit)
+        self.form_layout.addRow('새 암호:', self.new_password_edit)
+        self.form_layout.addRow('새 암호 확인:', self.confirm_edit)
+
+    def accept(self):
+        if self.new_password_edit.text() == self.confirm_edit.text():
+            if len(self.new_password_edit.text()) < 4:
+                QMessageBox.warning(self, '오류', '새 암호는 4자 이상이어야 합니다.')
+                return
+            super().accept()
+        else:
+            QMessageBox.warning(self, '오류', '새 암호가 일치하지 않습니다.')
+
+    def get_passwords(self):
+        return (
+            self.old_password_edit.text(),
+            self.new_password_edit.text()
+        )
+
 class MainApp(QMainWindow):
-    def __init__(self):
+    def __init__(self, db):
         super().__init__()
         self.setWindowTitle('담임교사용 상담일지')
         self.setGeometry(100, 100, 900, 600)
         
-        # 데이터베이스 초기화
-        self.db = Database()
+        # 데이터베이스 설정
+        self.db = db
         
         self.tabs = QTabWidget()
         self.setCentralWidget(self.tabs)
@@ -338,6 +417,21 @@ class MainApp(QMainWindow):
         student_names = [self.student_list.item(i).text() for i in range(self.student_list.count())]
         self.name_combo.addItems(student_names)
 
+    def change_password(self):
+        dialog = ChangePasswordDialog(self)
+        if dialog.exec():
+            old_password, new_password = dialog.get_passwords()
+
+            if not config.check_password(old_password):
+                QMessageBox.warning(self, '오류', '기존 암호가 올바르지 않습니다.')
+                return
+
+            if self.db.change_password(new_password):
+                config.set_password(new_password)
+                QMessageBox.information(self, '성공', '암호가 성공적으로 변경되었습니다.')
+            else:
+                QMessageBox.critical(self, '오류', '데이터베이스 암호 변경에 실패했습니다.')
+
     def init_credit_tab(self): 
         layout = QVBoxLayout()
         self.credit_tab.setLayout(layout)
@@ -348,10 +442,43 @@ class MainApp(QMainWindow):
         github_label = QLabel('Github: <a href="https://github.com/ghchoi48/HomeRoom-Counseling-Manager">https://github.com/ghchoi48/HomeRoom-Counseling-Manager</a>')
         github_label.setOpenExternalLinks(True)
         layout.addWidget(github_label)
+        
+        change_password_btn = QPushButton("암호 변경")
+        change_password_btn.clicked.connect(self.change_password)
+        layout.addWidget(change_password_btn)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setStyleSheet(qss_style)
-    main_window = MainApp()
-    main_window.show()
-    sys.exit(app.exec())
+
+    db = None
+    if not config.is_password_set():
+        dialog = CreatePasswordDialog()
+        if dialog.exec():
+            password = dialog.get_password()
+            config.set_password(password)
+            db = Database(password=password)
+            db.init_database()
+        else:
+            sys.exit(0)
+    else:
+        while True:
+            dialog = PasswordDialog()
+            if dialog.exec():
+                password = dialog.get_password()
+                if not config.check_password(password):
+                    QMessageBox.warning(None, '오류', '암호가 올바르지 않습니다.')
+                    continue
+                
+                db = Database(password=password)
+                if db.check_connection():
+                    break
+                else:
+                    QMessageBox.warning(None, '오류', '암호가 올바르지 않거나 데이터베이스 파일이 손상되었습니다.')
+            else:
+                sys.exit(0)
+
+    if db:
+        main_window = MainApp(db)
+        main_window.show()
+        sys.exit(app.exec())
