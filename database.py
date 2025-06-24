@@ -151,7 +151,7 @@ class Database:
         
         cursor.execute('''
         SELECT name, phone, gender, birth_date, 
-               guardian_phone1, guardian_phone2, memo
+            guardian_phone1, guardian_phone2, memo
         FROM students WHERE name = ?
         ''', (name,))
         
