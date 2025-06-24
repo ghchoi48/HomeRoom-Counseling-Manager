@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import QDateTime
 import sys
+from database import Database
 
 qss_style = '''
 QMainWindow { background-color: #f0f0f0; }
@@ -20,27 +21,8 @@ class MainApp(QMainWindow):
         self.setWindowTitle('담임교사용 상담일지')
         self.setGeometry(100, 100, 900, 600)
         
-        # 학생 상담 기록 데이터
-        self.records = {
-            '학생1': [
-                {'일시': '2023-05-10 10:00', '대상': '학생 본인', '방법': '대면', '내용': '학습 동기 부진 상담'},
-                {'일시': '2023-06-15 14:30', '대상': '학생 본인', '방법': '전화', '내용': '진로 상담 진행'}
-            ],
-            '학생2': [
-                {'일시': '2023-05-22 09:00', '대상': '학부모', '방법': '대면', '내용': '대인관계 갈등 상담'},
-                {'일시': '2023-06-18 13:00', '대상': '학생 본인', '방법': '대면', '내용': '가정 환경 변화 상담'}
-            ],
-            '학생3': [
-                {'일시': '2023-06-01 11:00', '대상': '학생 본인', '방법': '대면', '내용': '진학 상담'},
-                {'일시': '2023-06-20 15:00', '대상': '학생 본인', '방법': '대면', '내용': '학습 방법 코칭'}
-            ]
-        }
-        # 학생별 연락처와 가족 정보 저장용 딕셔너리
-        self.student_info = {
-            '학생1': {'연락처': '010-1111-1111', '성별': '남자', '생년월일': '2008-03-01', '가정형태': '일반(결혼)', '보호구분': '일반세대', '보호자 연락처1': '010-1111-2222', '보호자 연락처2': '', '메모': ''},
-            '학생2': {'연락처': '010-2222-2222', '성별': '여자', '생년월일': '2009-03-01', '가정형태': '이혼', '보호구분': '차상위계층', '보호자 연락처1': '010-2222-4444', '보호자 연락처2': '010-2222-3333', '메모': ''},
-            '학생3': {'연락처': '010-3333-3333', '성별': '기타', '생년월일': '2010-12-25', '가정형태': '조손', '보호구분': '국가유공자', '보호자 연락처1': '010-3333-4444', '보호자 연락처2': '010-3333-5555', '메모': ''}
-        }
+        # 데이터베이스 초기화
+        self.db = Database()
         
         self.tabs = QTabWidget()
         self.setCentralWidget(self.tabs)
@@ -48,8 +30,11 @@ class MainApp(QMainWindow):
         self.tabs.addTab(self.student_tab, '학생 정보')
         self.counsel_tab = QWidget()
         self.tabs.addTab(self.counsel_tab, '상담 기록')
+        self.credit_tab = QWidget()
+        self.tabs.addTab(self.credit_tab, '프로그램 정보')
         self.init_student_tab()
         self.init_counsel_tab()
+        self.init_credit_tab()
 
     def init_student_tab(self):
         layout = QHBoxLayout()
@@ -58,7 +43,7 @@ class MainApp(QMainWindow):
         # 왼쪽: 학생 목록 및 버튼
         left_layout = QVBoxLayout()
         self.student_list = QListWidget()
-        self.student_list.addItems(self.records.keys())
+        self.student_list.addItems(self.db.get_all_students())
         left_layout.addWidget(self.student_list)
         
         btn_add = QPushButton('학생 추가')
@@ -74,8 +59,8 @@ class MainApp(QMainWindow):
         info_group = QWidget()
         info_form = QFormLayout(info_group)
         self.phone_edit = QLineEdit()
-        self.sex_edit = QComboBox()
-        self.sex_edit.addItems(['남자', '여자', '기타'])
+        self.gender_edit = QComboBox()
+        self.gender_edit.addItems(['남자', '여자', '기타'])
         self.birth_edit = QDateTimeEdit()
         self.birth_edit.setDateTime(QDateTime.currentDateTime())
         self.birth_edit.setDisplayFormat("yyyy-MM-dd")
@@ -89,11 +74,12 @@ class MainApp(QMainWindow):
         self.family_phone_edit2 = QLineEdit()
         self.memo_edit = QTextEdit()
         self.memo_edit.setAcceptRichText(False)
+        self.memo_edit.setPlaceholderText("학생에 관한 메모를 입력하세요.")
         btn_save_info = QPushButton("학생 정보 저장")
 
         info_form.addRow(QLabel("학생 정보"))
         info_form.addRow("이름", self.name_edit)
-        info_form.addRow("성별", self.sex_edit)
+        info_form.addRow("성별", self.gender_edit)
         info_form.addRow("생년월일", self.birth_edit)
         info_form.addRow("연락처", self.phone_edit)
         info_form.addRow(QLabel(""))
@@ -129,47 +115,98 @@ class MainApp(QMainWindow):
         btn_del_record.clicked.connect(self.delete_counsel_record)
 
     def display_student_info_and_counsel(self, student_name):
+        # UI 초기화
+        self.name_edit.clear()
+        self.phone_edit.clear()
+        self.gender_edit.setCurrentIndex(-1)
+        self.birth_edit.setDateTime(QDateTime.currentDateTime())
+        self.format_edit.setCurrentIndex(-1)
+        self.welfare_edit.setCurrentIndex(-1)
+        self.family_phone_edit1.clear()
+        self.family_phone_edit2.clear()
+        self.memo_edit.clear()
+        self.counsel_record_list.clear()
+        
+        if not student_name:
+            return
+            
         # 학생 정보 표시
-        info = self.student_info.get(student_name, {'연락처': '', '성별': '', '생년월일': '', '가정형태': '', '보호구분': '', '보호자 연락처1': '', '보호자 연락처2': '', '메모': ''})
+        info = self.db.get_student(student_name)
+        if not info:
+            return
+            
         self.name_edit.setText(student_name)
-        self.sex_edit.setCurrentText(info.get('성별', ''))
-        self.birth_edit.setDateTime(QDateTime.fromString(info.get('생년월일', ''), "yyyy-MM-dd"))
-        self.phone_edit.setText(info.get('연락처', ''))
-        self.format_edit.setCurrentText(info.get('가정형태', ''))
-        self.welfare_edit.setCurrentText(info.get('보호구분', ''))
-        self.family_phone_edit1.setText(info.get('보호자 연락처1', ''))
-        self.family_phone_edit2.setText(info.get('보호자 연락처2', ''))
-        self.memo_edit.setText(info.get('메모', ''))
+        if info.get('성별'):
+            self.gender_edit.setCurrentText(info['성별'])
+        if info.get('생년월일'):
+            self.birth_edit.setDateTime(QDateTime.fromString(info['생년월일'], "yyyy-MM-dd"))
+        if info.get('연락처'):
+            self.phone_edit.setText(info['연락처'])
+        if info.get('가정형태'):
+            self.format_edit.setCurrentText(info['가정형태'])
+        if info.get('보호구분'):
+            self.welfare_edit.setCurrentText(info['보호구분'])
+        if info.get('보호자 연락처1'):
+            self.family_phone_edit1.setText(info['보호자 연락처1'])
+        if info.get('보호자 연락처2'):
+            self.family_phone_edit2.setText(info['보호자 연락처2'])
+        if info.get('메모'):
+            self.memo_edit.setText(info['메모'])
 
         # 상담 기록 표시
-        self.counsel_record_list.clear()
-        records = self.records.get(student_name, [])
+        records = self.db.get_counsel_records(student_name)
         if not records:
             self.counsel_record_list.addItem('상담 기록이 없습니다.')
             self.counsel_record_list.setEnabled(False)
             return
+            
         self.counsel_record_list.setEnabled(True)
         for rec in records:
             summary = f"[{rec['일시']}] ({rec['대상']}, {rec['방법']}) \n {rec['내용']} \n"
             self.counsel_record_list.addItem(summary)
 
     def save_student_info(self):
-        student_name = self.student_list.currentItem().text() if self.student_list.currentItem() else None
-        if not student_name:
+        current_item = self.student_list.currentItem()
+        if not current_item:
             QMessageBox.warning(self, "선택 오류", "학생을 선택하세요.")
             return
-        update_name = self.name_edit.text()
-        phone = self.phone_edit.text()
-        memo = self.memo_edit.toPlainText()
-        self.student_info[student_name] = {'연락처': phone, '메모': memo }
-        self.student_info[update_name] = self.student_info.pop(student_name)
-        self.records[update_name] = self.records.pop(student_name)
-        
-        updated_student_list = sorted(self.student_info.items())
-        self.student_info = dict(updated_student_list)
 
-        self.student_list.clear()
-        self.student_list.addItems(self.student_info.keys())
+        original_name = current_item.text()
+        updated_name = self.name_edit.text()
+
+        # 학생 이름이 변경된 경우
+        if original_name != updated_name:
+            if updated_name in self.db.get_all_students():
+                QMessageBox.warning(self, "중복 오류", f"'{updated_name}' 학생은 이미 존재합니다.")
+                self.name_edit.setText(original_name)  # 원래 이름으로 복원
+                return
+        
+        # 학생 정보 업데이트
+        info = {
+            '성별': self.gender_edit.currentText(),
+            '생년월일': self.birth_edit.dateTime().toString("yyyy-MM-dd"),
+            '연락처': self.phone_edit.text(),
+            '가정형태': self.format_edit.currentText(),
+            '보호구분': self.welfare_edit.currentText(),
+            '보호자 연락처1': self.family_phone_edit1.text(),
+            '보호자 연락처2': self.family_phone_edit2.text(),
+            '메모': self.memo_edit.toPlainText()
+        }
+
+        if original_name != updated_name:
+            # 이름이 변경된 경우: 기존 학생 삭제 후 새로운 이름으로 추가
+            old_records = self.db.get_counsel_records(original_name)
+            self.db.delete_student(original_name)
+            self.db.add_student(updated_name, info)
+            # 상담 기록 복원
+            for record in old_records:
+                self.db.add_counsel_record(updated_name, record)
+            current_item.setText(updated_name)
+            self.student_list.sortItems()
+        else:
+            # 이름이 변경되지 않은 경우: 정보만 업데이트
+            self.db.update_student(original_name, info)
+        
         self.refresh_student_list()
         QMessageBox.information(self, "저장 완료", "학생 정보가 저장되었습니다.")
 
@@ -178,64 +215,64 @@ class MainApp(QMainWindow):
         if not student_name:
             QMessageBox.warning(self, "선택 오류", "학생을 선택하세요.")
             return
-        row = self.counsel_record_list.currentRow()
-        records = self.records.get(student_name, [])
-        if not records or row < 0 or row >= len(records):
+        
+        current_item = self.counsel_record_list.currentItem()
+        if not current_item:
             QMessageBox.warning(self, "선택 오류", "삭제할 상담기록을 선택하세요.")
             return
+            
+        text = current_item.text()
+        datetime_str = text[1:text.find(']')]  # '[2023-05-10 10:00]' 형식에서 날짜 추출
+        
         reply = QMessageBox.question(
             self, '상담기록 삭제', "선택한 상담기록을 삭제하시겠습니까?",
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No
         )
         if reply == QMessageBox.Yes:
-            del self.records[student_name][row]
-            self.display_student_info_and_counsel(student_name)
+            if self.db.delete_counsel_record(student_name, datetime_str):
+                self.display_student_info_and_counsel(student_name)
 
     def add_student(self):
         text, ok = QInputDialog.getText(self, '학생 추가', '학생 이름을 입력하세요:')
         if ok and text:
-            if text in self.records:
+            if text in self.db.get_all_students():
                 QMessageBox.warning(self, "중복", "이미 존재하는 학생입니다.")
                 return
-            self.records[text] = []
-            self.student_info[text] = {'연락처': '', '성별': '', '생년월일': '', '가정형태': '', '보호구분': '', '보호자 연락처1': '', '보호자 연락처2': '', '메모': ''}
-            self.student_list.addItem(text)
-            sorted_student_list = sorted(self.student_info.items())
-            self.student_info = dict(sorted_student_list)
-            self.student_list.clear()
-            self.student_list.addItems(self.student_info.keys())
-            self.refresh_student_list()
+            
+            if self.db.add_student(text):
+                self.student_list.addItem(text)
+                self.student_list.sortItems()
+                self.refresh_student_list()
 
     def delete_student(self):
         current_item = self.student_list.currentItem()
         if not current_item:
             QMessageBox.warning(self, "선택 오류", "삭제할 학생을 선택하세요.")
             return
+            
         name = current_item.text()
         reply = QMessageBox.question(
             self, '학생 삭제', f'{name} 학생을 삭제하시겠습니까?',
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No
         )
         if reply == QMessageBox.Yes:
-            row = self.student_list.currentRow()
-            self.student_list.takeItem(row)
-            if name in self.records:
-                del self.records[name]
-            if name in self.student_info:
-                del self.student_info[name]
-            self.counsel_record_list.clear()
-            self.phone_edit.clear()
-            self.refresh_student_list()
+            if self.db.delete_student(name):
+                row = self.student_list.currentRow()
+                self.student_list.takeItem(row)
+                self.counsel_record_list.clear()
+                self.name_edit.clear()
+                self.phone_edit.clear()
+                self.refresh_student_list()
 
     def init_counsel_tab(self):
         layout = QVBoxLayout()
         self.counsel_tab.setLayout(layout)
         
         # 상담 학생 선택
-        layout.addWidget(QLabel('*학생 이름'))
+        layout.addWidget(QLabel('학생 이름'))
         self.name_combo = QComboBox()
         self.name_combo.setEditable(True)
-        self.name_combo.addItems(self.student_info.keys())
+        self.name_combo.addItems(self.db.get_all_students())
         layout.addWidget(self.name_combo)
 
         # 상담 대상
@@ -259,7 +296,7 @@ class MainApp(QMainWindow):
         layout.addWidget(self.method_combo)
         
         # 상담 내용 입력
-        layout.addWidget(QLabel('*상담 내용'))
+        layout.addWidget(QLabel('상담 내용'))
         self.counsel_input = QTextEdit()
         self.counsel_input.setPlaceholderText("상담 내용을 입력하세요.")
         layout.addWidget(self.counsel_input)
@@ -274,28 +311,43 @@ class MainApp(QMainWindow):
         if not name:
             QMessageBox.warning(self, "선택 오류", "학생 이름을 입력하거나 선택하세요.")
             return
-        if name not in self.records:
+        if name not in self.db.get_all_students():
             QMessageBox.warning(self, "입력 오류", "학생 이름이 존재하지 않습니다. 정확한 이름을 입력하세요.")
             return
+            
         dt = self.datetime_edit.dateTime().toString("yyyy-MM-dd HH:mm")
         target = self.target_combo.currentText()
         method = self.method_combo.currentText()
         content = self.counsel_input.toPlainText().strip()
+        
         if not content:
             QMessageBox.warning(self, "입력 오류", "상담 내용을 입력하세요.")
             return
+            
         new_record = {'일시': dt, '대상': target, '방법': method, '내용': content}
-        self.records[name].append(new_record)
-        # 학생 정보 탭의 상담 기록 갱신
-        if self.student_list.currentItem() and self.student_list.currentItem().text() == name:
-            self.display_student_info_and_counsel(name)
-        self.counsel_input.clear()
-        QMessageBox.information(self, "저장 완료", "상담 기록이 추가되었습니다.")
+        if self.db.add_counsel_record(name, new_record):
+            # 학생 정보 탭의 상담 기록 갱신
+            if self.student_list.currentItem() and self.student_list.currentItem().text() == name:
+                self.display_student_info_and_counsel(name)
+            self.counsel_input.clear()
+            QMessageBox.information(self, "저장 완료", "상담 기록이 추가되었습니다.")
 
     def refresh_student_list(self):
         # 학생 추가/삭제 후 상담 기록 탭의 콤보박스 갱신
         self.name_combo.clear()
-        self.name_combo.addItems(self.student_info.keys())
+        student_names = [self.student_list.item(i).text() for i in range(self.student_list.count())]
+        self.name_combo.addItems(student_names)
+
+    def init_credit_tab(self): 
+        layout = QVBoxLayout()
+        self.credit_tab.setLayout(layout)
+
+        layout.addWidget(QLabel('프로그램명: 담임교사용 상담일지 프로그램'))
+        layout.addWidget(QLabel('만든이: 경상북도교육청 전문상담교사 최규호'))
+        layout.addWidget(QLabel('라이센스: MIT Lisence'))
+        github_label = QLabel('Github: <a href="https://github.com/ghchoi48/HomeRoom-Counseling-Manager">https://github.com/ghchoi48/HomeRoom-Counseling-Manager</a>')
+        github_label.setOpenExternalLinks(True)
+        layout.addWidget(github_label)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

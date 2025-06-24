@@ -1,0 +1,267 @@
+from pysqlcipher3 import dbapi2 as sqlite3
+from datetime import datetime
+
+class Database:
+    def __init__(self, db_file="counseling.db", password=None):
+        self.db_file = db_file
+        self.password = password
+        self.init_database()
+
+    def get_connection(self):
+        """데이터베이스 연결을 가져옵니다."""
+        conn = sqlite3.connect(self.db_file)
+        if self.password:
+            conn.execute(f"PRAGMA key = '{self.password}'")
+        return conn
+
+    def check_connection(self):
+        """비밀번호가 올바른지 확인하기 위해 연결을 테스트합니다."""
+        if not self.password:
+            return True # 비밀번호가 없으면 항상 성공
+        
+        try:
+            conn = self.get_connection()
+            conn.execute("SELECT count(*) FROM sqlite_master;")
+            conn.close()
+            return True
+        except sqlite3.DatabaseError:
+            return False
+
+    def change_password(self, new_password):
+        """데이터베이스 암호화 키를 변경합니다."""
+        conn = self.get_connection()
+        try:
+            conn.execute(f"PRAGMA rekey = '{new_password}'")
+            self.password = new_password
+            return True
+        except Exception as e:
+            print(f"데이터베이스 키 변경 오류: {e}")
+            return False
+        finally:
+            conn.close()
+
+    def init_database(self):
+        """데이터베이스 및 테이블 초기화"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+
+        # 학생 정보 테이블
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS students (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL,
+            phone TEXT,
+            gender TEXT,
+            birth_date TEXT,
+            family_type TEXT,
+            protection_type TEXT,
+            guardian_phone1 TEXT,
+            guardian_phone2 TEXT,
+            memo TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        ''')
+
+        # 상담 기록 테이블
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS counseling_records (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            student_id INTEGER,
+            counsel_date TIMESTAMP NOT NULL,
+            target TEXT NOT NULL,
+            method TEXT NOT NULL,
+            content TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (student_id) REFERENCES students (id)
+        )
+        ''')
+
+        conn.commit()
+        conn.close()
+
+    def add_student(self, name, info=None):
+        """학생 추가"""
+        if info is None:
+            info = {}
+        
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute('''
+            INSERT INTO students (
+                name, phone, gender, birth_date, family_type, 
+                protection_type, guardian_phone1, guardian_phone2, memo
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                name,
+                info.get('연락처', ''),
+                info.get('성별', ''),
+                info.get('생년월일', ''),
+                info.get('가정형태', ''),
+                info.get('보호구분', ''),
+                info.get('보호자 연락처1', ''),
+                info.get('보호자 연락처2', ''),
+                info.get('메모', '')
+            ))
+            conn.commit()
+            return True
+        except sqlite3.IntegrityError:
+            return False
+        finally:
+            conn.close()
+
+    def update_student(self, name, info):
+        """학생 정보 업데이트"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute('''
+            UPDATE students SET
+                phone = ?,
+                gender = ?,
+                birth_date = ?,
+                family_type = ?,
+                protection_type = ?,
+                guardian_phone1 = ?,
+                guardian_phone2 = ?,
+                memo = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE name = ?
+            ''', (
+                info.get('연락처', ''),
+                info.get('성별', ''),
+                info.get('생년월일', ''),
+                info.get('가정형태', ''),
+                info.get('보호구분', ''),
+                info.get('보호자 연락처1', ''),
+                info.get('보호자 연락처2', ''),
+                info.get('메모', ''),
+                name
+            ))
+            conn.commit()
+            return cursor.rowcount > 0
+        finally:
+            conn.close()
+
+    def delete_student(self, name):
+        """학생 삭제"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute('DELETE FROM counseling_records WHERE student_id IN (SELECT id FROM students WHERE name = ?)', (name,))
+            cursor.execute('DELETE FROM students WHERE name = ?', (name,))
+            conn.commit()
+            return cursor.rowcount > 0
+        finally:
+            conn.close()
+
+    def get_student(self, name):
+        """학생 정보 조회"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+        SELECT name, phone, gender, birth_date, family_type, 
+               protection_type, guardian_phone1, guardian_phone2, memo
+        FROM students WHERE name = ?
+        ''', (name,))
+        
+        row = cursor.fetchone()
+        conn.close()
+        
+        if row:
+            return {
+                '연락처': row[1],
+                '성별': row[2],
+                '생년월일': row[3],
+                '가정형태': row[4],
+                '보호구분': row[5],
+                '보호자 연락처1': row[6],
+                '보호자 연락처2': row[7],
+                '메모': row[8]
+            }
+        return None
+
+    def get_all_students(self):
+        """모든 학생 목록 조회"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT name FROM students ORDER BY name')
+        students = [row[0] for row in cursor.fetchall()]
+        
+        conn.close()
+        return students
+
+    def add_counsel_record(self, student_name, record):
+        """상담 기록 추가"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute('SELECT id FROM students WHERE name = ?', (student_name,))
+            student_id = cursor.fetchone()
+            
+            if student_id:
+                cursor.execute('''
+                INSERT INTO counseling_records (
+                    student_id, counsel_date, target, method, content
+                ) VALUES (?, ?, ?, ?, ?)
+                ''', (
+                    student_id[0],
+                    record['일시'],
+                    record['대상'],
+                    record['방법'],
+                    record['내용']
+                ))
+                conn.commit()
+                return True
+            return False
+        finally:
+            conn.close()
+
+    def get_counsel_records(self, student_name):
+        """학생의 상담 기록 조회"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+        SELECT counsel_date, target, method, content
+        FROM counseling_records cr
+        JOIN students s ON cr.student_id = s.id
+        WHERE s.name = ?
+        ORDER BY counsel_date
+        ''', (student_name,))
+        
+        records = []
+        for row in cursor.fetchall():
+            records.append({
+                '일시': row[0],
+                '대상': row[1],
+                '방법': row[2],
+                '내용': row[3]
+            })
+        
+        conn.close()
+        return records
+
+    def delete_counsel_record(self, student_name, record_datetime):
+        """상담 기록 삭제"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute('''
+            DELETE FROM counseling_records 
+            WHERE student_id = (SELECT id FROM students WHERE name = ?)
+            AND counsel_date = ?
+            ''', (student_name, record_datetime))
+            
+            conn.commit()
+            return cursor.rowcount > 0
+        finally:
+            conn.close() 
