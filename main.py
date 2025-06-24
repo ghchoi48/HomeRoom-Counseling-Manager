@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import QDateTime
 import sys
 from database import Database
-import config
+import config_manager
 
 qss_style = '''
 QMainWindow { background-color: #f0f0f0; }
@@ -422,17 +422,16 @@ class MainApp(QMainWindow):
         if dialog.exec():
             old_password, new_password = dialog.get_passwords()
 
-            if not config.check_password(old_password):
+            if not config_manager.check_password(old_password):
                 QMessageBox.warning(self, '오류', '기존 암호가 올바르지 않습니다.')
                 return
 
-            if self.db.change_password(new_password):
-                config.set_password(new_password)
+            if config_manager.set_password(new_password):
                 QMessageBox.information(self, '성공', '암호가 성공적으로 변경되었습니다.')
             else:
-                QMessageBox.critical(self, '오류', '데이터베이스 암호 변경에 실패했습니다.')
+                QMessageBox.critical(self, '오류', '암호 변경에 실패했습니다.')
 
-    def init_credit_tab(self): 
+    def init_credit_tab(self):
         layout = QVBoxLayout()
         self.credit_tab.setLayout(layout)
 
@@ -452,31 +451,29 @@ if __name__ == '__main__':
     app.setStyleSheet(qss_style)
 
     db = None
-    if not config.is_password_set():
+    if not config_manager.is_password_set():
         dialog = CreatePasswordDialog()
         if dialog.exec():
             password = dialog.get_password()
-            config.set_password(password)
-            db = Database(password=password)
-            db.init_database()
+            config_manager.set_password(password)
         else:
             sys.exit(0)
-    else:
-        while True:
-            dialog = PasswordDialog()
-            if dialog.exec():
-                password = dialog.get_password()
-                if not config.check_password(password):
-                    QMessageBox.warning(None, '오류', '암호가 올바르지 않습니다.')
-                    continue
-                
-                db = Database(password=password)
+
+    while True:
+        dialog = PasswordDialog()
+        if dialog.exec():
+            password = dialog.get_password()
+            if config_manager.check_password(password):
+                db = Database()
                 if db.check_connection():
                     break
                 else:
-                    QMessageBox.warning(None, '오류', '암호가 올바르지 않거나 데이터베이스 파일이 손상되었습니다.')
+                    QMessageBox.critical(None, '오류', '데이터베이스에 연결할 수 없습니다.')
+                    sys.exit(1)
             else:
-                sys.exit(0)
+                QMessageBox.warning(None, '오류', '암호가 올바르지 않습니다.')
+        else:
+            sys.exit(0)
 
     if db:
         main_window = MainApp(db)

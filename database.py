@@ -1,24 +1,18 @@
-from pysqlcipher3 import dbapi2 as sqlite3
+import sqlite3
 from datetime import datetime
 
 class Database:
-    def __init__(self, db_file="counseling.db", password=None):
+    def __init__(self, db_file="counseling.db"):
         self.db_file = db_file
-        self.password = password
         self.init_database()
 
     def get_connection(self):
         """데이터베이스 연결을 가져옵니다."""
         conn = sqlite3.connect(self.db_file)
-        if self.password:
-            conn.execute(f"PRAGMA key = '{self.password}'")
         return conn
 
     def check_connection(self):
-        """비밀번호가 올바른지 확인하기 위해 연결을 테스트합니다."""
-        if not self.password:
-            return True # 비밀번호가 없으면 항상 성공
-        
+        """데이터베이스 연결을 테스트합니다."""
         try:
             conn = self.get_connection()
             conn.execute("SELECT count(*) FROM sqlite_master;")
@@ -26,19 +20,6 @@ class Database:
             return True
         except sqlite3.DatabaseError:
             return False
-
-    def change_password(self, new_password):
-        """데이터베이스 암호화 키를 변경합니다."""
-        conn = self.get_connection()
-        try:
-            conn.execute(f"PRAGMA rekey = '{new_password}'")
-            self.password = new_password
-            return True
-        except Exception as e:
-            print(f"데이터베이스 키 변경 오류: {e}")
-            return False
-        finally:
-            conn.close()
 
     def init_database(self):
         """데이터베이스 및 테이블 초기화"""
