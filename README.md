@@ -18,6 +18,11 @@
 -   Pyside6 (QT)
 -   Darkdetect (Alberto Sottile)
 
+### Screenshot
+
+![스크린샷 2025-06-25 100146](https://github.com/user-attachments/assets/342dbd12-7dd6-4812-85a7-b4da7ff3394e)
+
+
 ### How to Use
 
 -   프로그램 최초 실행시 암호 설정, 이후 재실행시 설정된 암호 입력하여 실행
