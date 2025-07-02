@@ -6,7 +6,8 @@
 from PySide6.QtWidgets import (
     QMainWindow, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout,
     QListWidget, QTextEdit, QPushButton, QInputDialog, QMessageBox, QLabel,
-    QComboBox, QDateTimeEdit, QLineEdit, QFormLayout, QListWidgetItem
+    QComboBox, QDateTimeEdit, QLineEdit, QFormLayout, QListWidgetItem,
+    QFileDialog
 )
 from PySide6.QtCore import QDateTime, Qt, QSize
 
@@ -414,7 +415,71 @@ class MainApp(QMainWindow):
         change_password_btn.clicked.connect(self.change_password)
         left_layout.addWidget(QLabel("암호를 잊었을 경우에는 settings.ini 파일을 삭제하세요.\n자료 보존을 위해 counseling.db 파일은 주기적으로 백업하세요."))
         left_layout.addWidget(change_password_btn)
+        left_layout.addStretch()
         layout.addLayout(left_layout, 1)
         
         right_layout = QVBoxLayout()
+        
+        # CSV 내보내기 섹션
+        right_layout.addWidget(QLabel("데이터 내보내기"))
+        right_layout.addWidget(QLabel("데이터를 CSV 파일로 내보낼 수 있습니다."))
+        
+        btn_export_all = QPushButton("전체 데이터 내보내기")
+        btn_export_all.clicked.connect(self.export_all_data)
+        right_layout.addWidget(btn_export_all)
+        
+        btn_export_students = QPushButton("학생 정보만 내보내기")
+        btn_export_students.clicked.connect(self.export_students_data)
+        right_layout.addWidget(btn_export_students)
+        
+        btn_export_counseling = QPushButton("상담 기록만 내보내기")
+        btn_export_counseling.clicked.connect(self.export_counseling_data)
+        right_layout.addWidget(btn_export_counseling)
+        
+        right_layout.addStretch()  # 남은 공간을 채움
         layout.addLayout(right_layout, 1)
+
+    def export_all_data(self):
+        """전체 데이터를 CSV로 내보내기"""
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, 
+            "전체 데이터 내보내기", 
+            "상담일지_전체데이터.csv", 
+            "CSV 파일 (*.csv)"
+        )
+        
+        if file_path:
+            if self.db.export_to_csv(file_path):
+                QMessageBox.information(self, "성공", f"전체 데이터가 성공적으로 내보내졌습니다.\n저장 위치: {file_path}")
+            else:
+                QMessageBox.critical(self, "오류", "데이터 내보내기에 실패했습니다.")
+
+    def export_students_data(self):
+        """학생 정보만 CSV로 내보내기"""
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, 
+            "학생 정보 내보내기", 
+            "상담일지_학생정보.csv", 
+            "CSV 파일 (*.csv)"
+        )
+        
+        if file_path:
+            if self.db.export_students_to_csv(file_path):
+                QMessageBox.information(self, "성공", f"학생 정보가 성공적으로 내보내졌습니다.\n저장 위치: {file_path}")
+            else:
+                QMessageBox.critical(self, "오류", "학생 정보 내보내기에 실패했습니다.")
+
+    def export_counseling_data(self):
+        """상담 기록만 CSV로 내보내기"""
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, 
+            "상담 기록 내보내기", 
+            "상담일지_상담기록.csv", 
+            "CSV 파일 (*.csv)"
+        )
+        
+        if file_path:
+            if self.db.export_counseling_to_csv(file_path):
+                QMessageBox.information(self, "성공", f"상담 기록이 성공적으로 내보내졌습니다.\n저장 위치: {file_path}")
+            else:
+                QMessageBox.critical(self, "오류", "상담 기록 내보내기에 실패했습니다.")

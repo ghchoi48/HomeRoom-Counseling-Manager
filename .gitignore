@@ -6,3 +6,4 @@ settings.ini
 /build
 /dist
 HRC-Manager.spec
+/ui/__pycache__

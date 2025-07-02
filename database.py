@@ -2,6 +2,7 @@ import sqlite3
 from datetime import datetime
 import os
 import sys
+import csv
 
 def get_base_dir():
     if getattr(sys, 'frozen', False):
@@ -31,6 +32,116 @@ class Database:
             conn.close()
             return True
         except sqlite3.DatabaseError:
+            return False
+
+    def export_to_csv(self, file_path):
+        """데이터베이스의 모든 데이터를 CSV 파일로 내보냅니다."""
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            
+            # 학생 정보 내보내기
+            cursor.execute('''
+                SELECT name, phone, gender, birth_date, 
+                       guardian_phone1, guardian_phone2, memo,
+                       created_at, updated_at
+                FROM students
+                ORDER BY name
+            ''')
+            students = cursor.fetchall()
+            
+            # 상담 기록 내보내기
+            cursor.execute('''
+                SELECT s.name, cr.counsel_date, cr.target, cr.method, cr.content,
+                       cr.created_at
+                FROM counseling_records cr
+                JOIN students s ON cr.student_id = s.id
+                ORDER BY s.name, cr.counsel_date
+            ''')
+            records = cursor.fetchall()
+            
+            conn.close()
+            
+            # CSV 파일 작성
+            with open(file_path, 'w', newline='', encoding='utf-8-sig') as csvfile:
+                writer = csv.writer(csvfile)
+                
+                # 학생 정보 섹션
+                writer.writerow(['=== 학생 정보 ==='])
+                writer.writerow(['이름', '연락처', '성별', '생년월일', '보호자연락처1', '보호자연락처2', '메모', '생성일시', '수정일시'])
+                for student in students:
+                    writer.writerow(student)
+                
+                writer.writerow([])  # 빈 줄
+                
+                # 상담 기록 섹션
+                writer.writerow(['=== 상담 기록 ==='])
+                writer.writerow(['학생이름', '상담일시', '상담대상', '상담방법', '상담내용', '생성일시'])
+                for record in records:
+                    writer.writerow(record)
+            
+            return True
+            
+        except Exception as e:
+            print(f"CSV 내보내기 오류: {e}")
+            return False
+
+    def export_students_to_csv(self, file_path):
+        """학생 정보만 CSV 파일로 내보냅니다."""
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                SELECT name, phone, gender, birth_date, 
+                       guardian_phone1, guardian_phone2, memo,
+                       created_at, updated_at
+                FROM students
+                ORDER BY name
+            ''')
+            students = cursor.fetchall()
+            
+            conn.close()
+            
+            with open(file_path, 'w', newline='', encoding='utf-8-sig') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(['이름', '연락처', '성별', '생년월일', '보호자연락처1', '보호자연락처2', '메모', '생성일시', '수정일시'])
+                for student in students:
+                    writer.writerow(student)
+            
+            return True
+            
+        except Exception as e:
+            print(f"학생 정보 CSV 내보내기 오류: {e}")
+            return False
+
+    def export_counseling_to_csv(self, file_path):
+        """상담 기록만 CSV 파일로 내보냅니다."""
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                SELECT s.name, cr.counsel_date, cr.target, cr.method, cr.content,
+                       cr.created_at
+                FROM counseling_records cr
+                JOIN students s ON cr.student_id = s.id
+                ORDER BY s.name, cr.counsel_date
+            ''')
+            records = cursor.fetchall()
+            
+            conn.close()
+            
+            with open(file_path, 'w', newline='', encoding='utf-8-sig') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(['학생이름', '상담일시', '상담대상', '상담방법', '상담내용', '생성일시'])
+                for record in records:
+                    writer.writerow(record)
+            
+            return True
+            
+        except Exception as e:
+            print(f"상담 기록 CSV 내보내기 오류: {e}")
             return False
 
     def init_database(self):
