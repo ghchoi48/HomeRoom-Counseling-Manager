@@ -112,8 +112,7 @@ class Database:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute('''
-                    SELECT s.name, cr.counsel_date, cr.target, cr.method, cr.content,
-                           cr.created_at
+                    SELECT s.name, cr.counsel_date, cr.target, cr.method, cr.content, cr.created_at
                     FROM counseling_records cr
                     JOIN students s ON cr.student_id = s.id
                     ORDER BY s.name, cr.counsel_date

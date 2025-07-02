@@ -1,2 +1,3 @@
 PySide6
-darkdetect 
+darkdetect
+requests

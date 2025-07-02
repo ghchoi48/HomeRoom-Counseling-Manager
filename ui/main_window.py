@@ -15,6 +15,7 @@ from ui.dialogs import (
     CreatePasswordDialog, PasswordDialog, ChangePasswordDialog, EditCounselDialog
 )
 from utils.config_manager import check_password, set_password
+from utils.updater import CURRENT_VERSION
 
 
 class MainApp(QMainWindow):
@@ -416,7 +417,7 @@ class MainApp(QMainWindow):
         self.credit_tab.setLayout(layout)
         
         left_layout = QVBoxLayout()
-        left_layout.addWidget(QLabel('프로그램명: 담임교사용 상담일지 프로그램\n만든이: 경상북도교육청 전문상담교사 최규호\n라이센스: MIT Lisence'))
+        left_layout.addWidget(QLabel(f'프로그램명: 담임교사용 상담일지 프로그램\n현재 버전: {CURRENT_VERSION}\n만든이: 경상북도교육청 전문상담교사 최규호\n라이센스: MIT Lisence'))
         github_label = QLabel('Github: <a href="https://github.com/ghchoi48/HomeRoom-Counseling-Manager">https://github.com/ghchoi48/HomeRoom-Counseling-Manager</a>')
         github_label.setOpenExternalLinks(True)
         left_layout.addWidget(github_label)

@@ -4,6 +4,7 @@ HomeRoom Counseling Manager
 """
 
 import sys
+import threading
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from database import Database
@@ -11,6 +12,7 @@ from utils.config_manager import is_password_set, check_password, set_password
 from utils.theme_manager import apply_theme_to_app
 from ui.dialogs import CreatePasswordDialog, PasswordDialog
 from ui.main_window import MainApp
+from utils.updater import check_for_updates
 
 
 def main():
@@ -50,6 +52,9 @@ def main():
     if db:
         main_window = MainApp(db)
         main_window.show()
+        # 백그라운드에서 업데이트 확인
+        update_thread = threading.Thread(target=check_for_updates, args=(main_window,))
+        update_thread.start()
         sys.exit(app.exec())
 
 
