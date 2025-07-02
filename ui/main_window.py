@@ -56,12 +56,13 @@ class MainApp(QMainWindow):
         # 스레드 시작
         self.update_thread.start()
 
-    def show_update_dialog(self, latest_version):
+    def show_update_dialog(self, latest_version, update_content):
         """업데이트 알림 대화상자를 표시합니다."""
+        message = f"새로운 버전({latest_version})이 있습니다.\n\n업데이트 내용:\n{update_content}\n\n다운로드 페이지로 이동하시겠습니까?"
         reply = QMessageBox.question(
             self,
             "업데이트 가능",
-            f"새로운 버전({latest_version})이 있습니다. 다운로드 페이지로 이동하시겠습니까?",
+            message,
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No,
         )
