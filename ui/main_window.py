@@ -48,6 +48,7 @@ class MainApp(QMainWindow):
         
         # 왼쪽: 학생 목록 및 버튼
         left_layout = QVBoxLayout()
+        left_layout.addWidget(QLabel("학생 목록"))
         self.student_list = QListWidget()
         self.student_list.addItems(self.db.get_all_students())
         left_layout.addWidget(self.student_list)
