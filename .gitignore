@@ -1,9 +1,0 @@
-.DS_Store
-__pycache__/config_manager.cpython-313.pyc
-/__pycache__
-counseling.db
-settings.ini
-/build
-/dist
-HRC-Manager.spec
-/ui/__pycache__
