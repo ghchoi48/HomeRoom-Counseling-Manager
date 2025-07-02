@@ -1,33 +1,32 @@
 
 import requests
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtCore import QObject, Signal
 
 # 현재 애플리케이션 버전
 CURRENT_VERSION = "1.2.1"  # 실제 버전에 맞게 수정해야 합니다.
 
-def get_latest_version(repo_owner, repo_name):
-    """GitHub에서 최신 릴리스 버전 정보를 가져옵니다."""
-    url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest"
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        return response.json()["tag_name"]
-    except requests.RequestException as e:
-        print(f"Error fetching latest version: {e}")
-        return None
+class UpdateChecker(QObject):
+    """백그라운드에서 업데이트를 확인하고 완료되면 시그널을 발생시키는 클래스"""
+    update_available = Signal(str)
+    error_occurred = Signal(str)
 
-def check_for_updates(parent=None):
-    """업데이트를 확인하고 필요한 경우 사용자에게 알립니다."""
-    latest_version = get_latest_version("ghchoi48", "HomeRoom-Counseling-Manager")
+    def __init__(self, repo_owner, repo_name):
+        super().__init__()
+        self.repo_owner = repo_owner
+        self.repo_name = repo_name
 
-    if latest_version and latest_version > CURRENT_VERSION:
-        reply = QMessageBox.question(
-            parent,
-            "업데이트 가능",
-            f"새로운 버전({latest_version})이 있습니다. 다운로드 페이지로 이동하시겠습니까?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
-        )
-        if reply == QMessageBox.Yes:
-            import webbrowser
-            webbrowser.open("https://github.com/ghchoi48/HomeRoom-Counseling-Manager/releases")
+    def check_for_updates(self):
+        """GitHub에서 최신 릴리스 버전 정보를 가져와서 필요한 경우 시그널을 발생시킵니다."""
+        url = f"https://api.github.com/repos/{self.repo_owner}/{self.repo_name}/releases/latest"
+        try:
+            response = requests.get(url, timeout=5)
+            response.raise_for_status()
+            latest_version = response.json()["tag_name"].lstrip('v')
+            
+            # 버전 비교 (v 접두사 제거 후)
+            if latest_version > CURRENT_VERSION:
+                self.update_available.emit(latest_version)
+        except requests.RequestException as e:
+            error_message = f"Error fetching latest version: {e}"
+            print(error_message)
+            self.error_occurred.emit(error_message)

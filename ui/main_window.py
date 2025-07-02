@@ -9,13 +9,14 @@ from PySide6.QtWidgets import (
     QComboBox, QDateTimeEdit, QLineEdit, QFormLayout, QListWidgetItem,
     QFileDialog
 )
-from PySide6.QtCore import QDateTime, Qt, QSize
+import webbrowser
+from PySide6.QtCore import QDateTime, Qt, QSize, QThread
 
 from ui.dialogs import (
-    CreatePasswordDialog, PasswordDialog, ChangePasswordDialog, EditCounselDialog
+    ChangePasswordDialog, EditCounselDialog
 )
 from utils.config_manager import check_password, set_password
-from utils.updater import CURRENT_VERSION
+from utils.updater import CURRENT_VERSION, UpdateChecker
 
 
 class MainApp(QMainWindow):
@@ -41,6 +42,39 @@ class MainApp(QMainWindow):
         self.init_student_tab()
         self.init_counsel_tab()
         self.init_credit_tab()
+
+        # 업데이트 확인 스레드 설정
+        self.update_thread = QThread()
+        self.update_checker = UpdateChecker("ghchoi48", "HomeRoom-Counseling-Manager")
+        self.update_checker.moveToThread(self.update_thread)
+        
+        # 시그널 연결
+        self.update_thread.started.connect(self.update_checker.check_for_updates)
+        self.update_checker.update_available.connect(self.show_update_dialog)
+        self.update_checker.error_occurred.connect(self.show_update_error)
+        
+        # 스레드 시작
+        self.update_thread.start()
+
+    def show_update_dialog(self, latest_version):
+        """업데이트 알림 대화상자를 표시합니다."""
+        reply = QMessageBox.question(
+            self,
+            "업데이트 가능",
+            f"새로운 버전({latest_version})이 있습니다. 다운로드 페이지로 이동하시겠습니까?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if reply == QMessageBox.Yes:
+            webbrowser.open("https://github.com/ghchoi48/HomeRoom-Counseling-Manager/releases")
+        self.update_thread.quit()
+        self.update_thread.wait()
+
+    def show_update_error(self, error_message):
+        """업데이트 확인 중 발생한 오류를 표시합니다."""
+        print(f"Update check failed: {error_message}")
+        self.update_thread.quit()
+        self.update_thread.wait()
 
     def init_student_tab(self):
         """학생 정보 탭 초기화"""
