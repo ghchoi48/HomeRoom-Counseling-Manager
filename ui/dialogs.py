@@ -5,7 +5,7 @@
 
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QFormLayout, QDialogButtonBox,
-    QLineEdit, QComboBox, QDateTimeEdit, QTextEdit
+    QLineEdit, QComboBox, QDateTimeEdit, QTextEdit, QMessageBox
 )
 from PySide6.QtCore import QDateTime
 
@@ -41,12 +41,10 @@ class CreatePasswordDialog(PasswordDialogBase):
     def accept(self):
         if self.password_edit.text() == self.confirm_edit.text():
             if len(self.password_edit.text()) < 4:
-                from PySide6.QtWidgets import QMessageBox
                 QMessageBox.warning(self, '오류', '암호는 4자 이상이어야 합니다.')
                 return
             super().accept()
         else:
-            from PySide6.QtWidgets import QMessageBox
             QMessageBox.warning(self, '오류', '암호가 일치하지 않습니다.')
 
     def get_password(self):
@@ -85,12 +83,10 @@ class ChangePasswordDialog(PasswordDialogBase):
     def accept(self):
         if self.new_password_edit.text() == self.confirm_edit.text():
             if len(self.new_password_edit.text()) < 4:
-                from PySide6.QtWidgets import QMessageBox
                 QMessageBox.warning(self, '오류', '새 암호는 4자 이상이어야 합니다.')
                 return
             super().accept()
         else:
-            from PySide6.QtWidgets import QMessageBox
             QMessageBox.warning(self, '오류', '새 암호가 일치하지 않습니다.')
 
     def get_passwords(self):

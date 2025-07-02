@@ -1,13 +1,5 @@
 import configparser
-import os
-import hashlib
-import sys
-
-def get_base_dir():
-    if getattr(sys, 'frozen', False):
-        return os.path.dirname(sys.executable)
-    else:
-        return os.path.dirname(os.path.abspath(__file__))
+from .helpers import get_base_dir
 
 BASE_DIR = get_base_dir()
 CONFIG_FILE = os.path.join(BASE_DIR, 'settings.ini')

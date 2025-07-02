@@ -181,17 +181,31 @@ class MainApp(QMainWindow):
             return
 
         original_name = current_item.text()
-        updated_name = self.name_edit.text()
+        student_data = self.db.get_student(original_name)
+        if not student_data:
+            QMessageBox.critical(self, "오류", "학생 정보를 데이터베이스에서 찾을 수 없습니다.")
+            return
+        
+        student_id = student_data['id']
+        updated_name = self.name_edit.text().strip()
 
-        # 학생 이름이 변경된 경우
+        if not updated_name:
+            QMessageBox.warning(self, "입력 오류", "학생 이름은 비워둘 수 없습니다.")
+            self.name_edit.setText(original_name) # 원래 이름으로 복원
+            return
+
+        # 이름이 변경되었고, 변경된 이름이 이미 다른 학생에게 사용 중인지 확인
         if original_name != updated_name:
-            if updated_name in self.db.get_all_students():
+            existing_students = self.db.get_all_students()
+            if updated_name in existing_students:
                 QMessageBox.warning(self, "중복 오류", f"'{updated_name}' 학생은 이미 존재합니다.")
                 self.name_edit.setText(original_name)  # 원래 이름으로 복원
                 return
         
         # 학생 정보 업데이트
         info = {
+            'id': student_id,
+            '이름': updated_name,
             '성별': self.gender_edit.currentText(),
             '생년월일': self.birth_edit.dateTime().toString("yyyy-MM-dd"),
             '연락처': self.phone_edit.text(),
@@ -200,22 +214,16 @@ class MainApp(QMainWindow):
             '메모': self.memo_edit.toPlainText()
         }
 
-        if original_name != updated_name:
-            # 이름이 변경된 경우: 기존 학생 삭제 후 새로운 이름으로 추가
-            old_records = self.db.get_counsel_records(original_name)
-            self.db.delete_student(original_name)
-            self.db.add_student(updated_name, info)
-            # 상담 기록 복원
-            for record in old_records:
-                self.db.add_counsel_record(updated_name, record)
+        if self.db.update_student(student_id, info):
+            QMessageBox.information(self, "저장 완료", "학생 정보가 성공적으로 저장되었습니다.")
+            # UI의 학생 목록 업데이트
             current_item.setText(updated_name)
             self.student_list.sortItems()
+            self.refresh_student_list()
         else:
-            # 이름이 변경되지 않은 경우: 정보만 업데이트
-            self.db.update_student(original_name, info)
-        
-        self.refresh_student_list()
-        QMessageBox.information(self, "저장 완료", "학생 정보가 저장되었습니다.")
+            QMessageBox.critical(self, "저장 실패", "학생 정보 저장에 실패했습니다. 이름이 중복되었거나 데이터베이스 오류일 수 있습니다.")
+            # 실패 시 UI를 원래대로 되돌릴 수 있도록 원래 이름으로 다시 설정
+            self.name_edit.setText(original_name)
 
     def edit_counsel_record(self):
         """상담 기록 수정"""
