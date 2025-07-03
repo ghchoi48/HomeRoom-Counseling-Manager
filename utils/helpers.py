@@ -1,15 +1,9 @@
-"""
-공통으로 사용되는 헬퍼 함수들을 모아놓은 모듈
-"""
-
 import os
 import sys
 
 def get_base_dir():
-    """
-    실행 파일의 기본 디렉토리를 반환합니다.
-    PyInstaller 등으로 패키징되었을 때와 일반 파이썬 환경 모두에서 작동합니다.
-    """
+    # 실행파일의 기본 디렉토리 반환
+    
     if getattr(sys, 'frozen', False):
         # PyInstaller에 의해 생성된 임시 폴더의 경로
         return os.path.dirname(sys.executable)

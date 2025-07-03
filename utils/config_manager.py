@@ -9,10 +9,12 @@ PASSWORD_SECTION = 'security'
 PASSWORD_OPTION = 'password'
 
 def _hash_password(password):
+    # 암호를 비문화
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
 def is_password_set():
-    """설정 파일에 암호가 설정되어 있는지 확인합니다."""
+    # settings.ini에 암호가 있는지 확인
+
     if not os.path.exists(CONFIG_FILE):
         return False
     config = configparser.ConfigParser()
@@ -20,7 +22,8 @@ def is_password_set():
     return config.has_option(PASSWORD_SECTION, PASSWORD_OPTION)
 
 def check_password(password):
-    """입력된 암호가 저장된 해시와 일치하는지 확인합니다."""
+    # 입력된 암호와 해시가 일치하는지 확인
+
     if not is_password_set():
         return False
     config = configparser.ConfigParser()
@@ -29,7 +32,8 @@ def check_password(password):
     return stored_hash == _hash_password(password)
 
 def set_password(password):
-    """새 암호를 해시로 변환하여 저장합니다."""
+    # 새 암호를 비문화하여 저장
+    
     config = configparser.ConfigParser()
     if os.path.exists(CONFIG_FILE):
         config.read(CONFIG_FILE, encoding='utf-8')

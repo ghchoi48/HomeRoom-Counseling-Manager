@@ -1,7 +1,4 @@
-"""
-메인 윈도우 모듈
-애플리케이션의 메인 윈도우 클래스를 포함합니다.
-"""
+# 메인 윈도우 모듈
 
 from PySide6.QtWidgets import (
     QMainWindow, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout,
@@ -20,8 +17,7 @@ from utils.updater import CURRENT_VERSION, UpdateChecker
 
 
 class MainApp(QMainWindow):
-    """메인 애플리케이션 윈도우"""
-    
+    #메인 애플리케이션 윈도우 클래스
     def __init__(self, db):
         super().__init__()
         self.setWindowTitle('HomeRoom Counseling Manager')
@@ -31,6 +27,7 @@ class MainApp(QMainWindow):
         # 데이터베이스 설정
         self.db = db
         
+        #탭 UI 구현
         self.tabs = QTabWidget()
         self.setCentralWidget(self.tabs)
         self.student_tab = QWidget()
@@ -45,7 +42,7 @@ class MainApp(QMainWindow):
 
         # 업데이트 확인 스레드 설정
         self.update_thread = QThread()
-        self.update_checker = UpdateChecker("ghchoi48", "HomeRoom-Counseling-Manager")
+        self.update_checker = UpdateChecker("ghchoi48", "HomeRoom-Counseling-Manager") # 업데이트 모듈에 Github 아이디, 저장소 이름 전달
         self.update_checker.moveToThread(self.update_thread)
         
         # 시그널 연결
@@ -57,7 +54,7 @@ class MainApp(QMainWindow):
         self.update_thread.start()
 
     def show_update_dialog(self, latest_version, update_content):
-        """업데이트 알림 대화상자를 표시합니다."""
+        # 업데이트 알림 대화상자 표시 함수
         message = f"새로운 버전({latest_version})이 있습니다.\n\n업데이트 내용:\n{update_content}\n\n다운로드 페이지로 이동하시겠습니까?"
         reply = QMessageBox.question(
             self,
@@ -72,13 +69,15 @@ class MainApp(QMainWindow):
         self.update_thread.wait()
 
     def show_update_error(self, error_message):
-        """업데이트 확인 중 발생한 오류를 표시합니다."""
+        # 업데이트 오류 표시 함수
         print(f"Update check failed: {error_message}")
         self.update_thread.quit()
         self.update_thread.wait()
 
     def init_student_tab(self):
-        """학생 정보 탭 초기화"""
+        # 학생 정보탭 초기화 함수
+
+        # 레이아웃 설정
         layout = QHBoxLayout()
         self.student_tab.setLayout(layout)
         
@@ -162,7 +161,8 @@ class MainApp(QMainWindow):
         btn_del_record.clicked.connect(self.delete_counsel_record)
 
     def display_student_info_and_counsel(self, student_name):
-        """학생 정보와 상담 기록을 화면에 표시"""
+        # 학생 정보 및 상담 내역 표시 함수
+
         # UI 초기화
         self.name_edit.clear()
         self.phone_edit.clear()
@@ -210,7 +210,8 @@ class MainApp(QMainWindow):
             self.counsel_record_list.addItem(item)
 
     def save_student_info(self):
-        """학생 정보 저장"""
+        # 학생 정보 저장 함수
+
         current_item = self.student_list.currentItem()
         if not current_item:
             QMessageBox.warning(self, "선택 오류", "학생을 선택하세요.")
@@ -262,7 +263,8 @@ class MainApp(QMainWindow):
             self.name_edit.setText(original_name)
 
     def edit_counsel_record(self):
-        """상담 기록 수정"""
+        # 상담 기록 수정 함수
+
         student_name = self.student_list.currentItem().text() if self.student_list.currentItem() else None
         if not student_name:
             QMessageBox.warning(self, "선택 오류", "학생을 선택하세요.")
@@ -293,7 +295,8 @@ class MainApp(QMainWindow):
                 QMessageBox.critical(self, "오류", "상담기록 수정에 실패했습니다.")
 
     def delete_counsel_record(self):
-        """상담 기록 삭제"""
+        # 상담 기록 삭제 함수
+
         student_name = self.student_list.currentItem().text() if self.student_list.currentItem() else None
         if not student_name:
             QMessageBox.warning(self, "선택 오류", "학생을 선택하세요.")
@@ -315,7 +318,8 @@ class MainApp(QMainWindow):
                 self.display_student_info_and_counsel(student_name)
 
     def add_student(self):
-        """학생 추가"""
+        # 학생 추가 함수
+
         text, ok = QInputDialog.getText(self, '학생 추가', '학생 이름을 입력하세요:')
         if ok and text:
             if text in self.db.get_all_students():
@@ -328,7 +332,8 @@ class MainApp(QMainWindow):
                 self.refresh_student_list()
 
     def delete_student(self):
-        """학생 삭제"""
+        # 학생 삭제 함수
+        
         current_item = self.student_list.currentItem()
         if not current_item:
             QMessageBox.warning(self, "선택 오류", "삭제할 학생을 선택하세요.")
@@ -349,7 +354,8 @@ class MainApp(QMainWindow):
                 self.refresh_student_list()
 
     def init_counsel_tab(self):
-        """상담 기록 탭 초기화"""
+        # 상담 기록 탭 초기화
+
         layout = QVBoxLayout()
         self.counsel_tab.setLayout(layout)
         
@@ -398,7 +404,8 @@ class MainApp(QMainWindow):
         btn_add_counsel.clicked.connect(self.add_counsel_record)
 
     def add_counsel_record(self):
-        """상담 기록 추가"""
+        # 상담 기록 추가 함수
+
         name = self.name_combo.currentText()
         if not name:
             QMessageBox.warning(self, "선택 오류", "학생 이름을 입력하거나 선택하세요.")
@@ -425,14 +432,16 @@ class MainApp(QMainWindow):
             QMessageBox.information(self, "저장 완료", "상담 기록이 추가되었습니다.")
 
     def refresh_student_list(self):
-        """학생 목록 새로고침"""
+        # 학생 목록 새로고침 함수
+
         # 학생 추가/삭제 후 상담 기록 탭의 콤보박스 갱신
         self.name_combo.clear()
         student_names = [self.student_list.item(i).text() for i in range(self.student_list.count())]
         self.name_combo.addItems(student_names)
 
     def change_password(self):
-        """암호 변경"""
+        # 암호 변경 함수
+
         dialog = ChangePasswordDialog(self)
         if dialog.exec():
             old_password, new_password = dialog.get_passwords()
@@ -447,20 +456,24 @@ class MainApp(QMainWindow):
                 QMessageBox.critical(self, '오류', '암호 변경에 실패했습니다.')
 
     def init_credit_tab(self):
-        """프로그램 정보 탭 초기화"""
+        # 프로그램 정보 탭 초기화
+
         layout = QHBoxLayout()
         self.credit_tab.setLayout(layout)
         
         left_layout = QVBoxLayout()
-        left_layout.addWidget(QLabel(f'프로그램명: 담임교사용 상담일지 프로그램\n현재 버전: {CURRENT_VERSION}\n만든이: 경상북도교육청 전문상담교사 최규호\n라이센스: MIT Lisence'))
-        github_label = QLabel('Github: <a href="https://github.com/ghchoi48/HomeRoom-Counseling-Manager">https://github.com/ghchoi48/HomeRoom-Counseling-Manager</a>')
+        left_layout.addWidget(QLabel('담임교사용 상담일지 프로그램'))
+        left_layout.addWidget(QLabel(f'현재 버전: {CURRENT_VERSION}'))
+        left_layout.addWidget(QLabel('만든이: 경상북도교육청 전문상담교사 최규호'))
+        left_layout.addWidget(QLabel('라이센스: MIT Lisence'))
+        github_label = QLabel('소스코드: <a href="https://github.com/ghchoi48/HomeRoom-Counseling-Manager">https://github.com/ghchoi48/HomeRoom-Counseling-Manager</a>')
         github_label.setOpenExternalLinks(True)
         left_layout.addWidget(github_label)
         change_password_btn = QPushButton("암호 변경")
         change_password_btn.clicked.connect(self.change_password)
         left_layout.addWidget(QLabel("암호를 잊었을 경우에는 settings.ini 파일을 삭제하세요.\n자료 보존을 위해 counseling.db 파일은 주기적으로 백업하세요."))
         left_layout.addWidget(change_password_btn)
-        left_layout.addStretch()
+        left_layout.addStretch() # 남은 공간을 채움
         layout.addLayout(left_layout, 1)
         
         right_layout = QVBoxLayout()
@@ -485,7 +498,7 @@ class MainApp(QMainWindow):
         layout.addLayout(right_layout, 1)
 
     def export_all_data(self):
-        """전체 데이터를 CSV로 내보내기"""
+        # 전체 데이터 CSV 내보내기
         file_path, _ = QFileDialog.getSaveFileName(
             self, 
             "전체 데이터 내보내기", 
@@ -500,7 +513,7 @@ class MainApp(QMainWindow):
                 QMessageBox.critical(self, "오류", "데이터 내보내기에 실패했습니다.")
 
     def export_students_data(self):
-        """학생 정보만 CSV로 내보내기"""
+        # 학생 정보 CSV 내보내기
         file_path, _ = QFileDialog.getSaveFileName(
             self, 
             "학생 정보 내보내기", 
@@ -515,7 +528,7 @@ class MainApp(QMainWindow):
                 QMessageBox.critical(self, "오류", "학생 정보 내보내기에 실패했습니다.")
 
     def export_counseling_data(self):
-        """상담 기록만 CSV로 내보내기"""
+        # 상담 기록 CSV 내보내기
         file_path, _ = QFileDialog.getSaveFileName(
             self, 
             "상담 기록 내보내기", 

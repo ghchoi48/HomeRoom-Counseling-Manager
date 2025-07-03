@@ -24,7 +24,6 @@ class PasswordDialogBase(QDialog):
         self.layout.addLayout(self.form_layout)
         self.layout.addWidget(self.buttons)
 
-
 class CreatePasswordDialog(PasswordDialogBase):
     """새 암호 생성 다이얼로그"""
     def __init__(self, parent=None):

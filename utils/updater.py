@@ -1,12 +1,12 @@
-
 import requests
 from PySide6.QtCore import QObject, Signal
 
 # 현재 애플리케이션 버전
-CURRENT_VERSION = "1.1"  # 실제 버전에 맞게 수정해야 합니다.
+CURRENT_VERSION = "1.2.1"  # 실제 버전에 맞게 수정
 
 class UpdateChecker(QObject):
-    """백그라운드에서 업데이트를 확인하고 완료되면 시그널을 발생시키는 클래스"""
+    # 백그라운드에서 업데이트를 확인하고 완료되면 시그널을 발생시키는 클래스
+    
     update_available = Signal(str, str)
     error_occurred = Signal(str)
 
@@ -16,7 +16,8 @@ class UpdateChecker(QObject):
         self.repo_name = repo_name
 
     def check_for_updates(self):
-        """GitHub에서 최신 릴리스 버전 정보를 가져와서 필요한 경우 시그널을 발생시킵니다."""
+        # GitHub에서 최신 릴리스 버전 정보를 가져와서 필요한 경우 시그널을 발생
+
         url = f"https://api.github.com/repos/{self.repo_owner}/{self.repo_name}/releases/latest"
         try:
             response = requests.get(url, timeout=5)
