@@ -52,20 +52,28 @@ class Database:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute('''
-                    SELECT REPLACE(date(cr.counsel_date), '-', ''), cr.content, cr.method
+                    SELECT cr.category, REPLACE(date(cr.counsel_date), '-', ''), cr.content, cr.method
                     FROM counseling_records cr
                     JOIN students s ON cr.student_id = s.id
                     ORDER BY cr.counsel_date
                 ''')
                 records = cursor.fetchall()
-                front_value = ('일반상담', '일반', '상담', '개인상담', '상담구분', '1', '2025')
-                middle_value1 = ('','')
-                new_records = [ front_value + record[:1] + middle_value1 + record[1:] for record in records]
-                middle_value2 = ('일반 상담은 상담 내용을 입력하지 않습니다.', '0', '10', '교사')
-                new_new_records = [ record[:11] + middle_value2 + record[11:] for record in new_records]
+                # *상담구분, *상담일자, *상담제목, *상담매체구분
+
+                front_value = ('일반상담', '일반', '상담', '개인상담')
+                middle_value1 = ('1', '2025')
+                new_records = [ front_value + record[:1] + middle_value1 + record[1:] for record in records] 
+                # *상담분류, *Wee클래스, *대분류, *중분류, *상담구분, *상담인원, *학년도, *상담일자, *상담제목, *상담매체구분
+
+                middle_value2 = ('','')
+                new_new_records = [ record[:8] + middle_value2 + record[8:] for record in new_records]
+                # *상담분류, *Wee클래스, *대분류, *중분류, *상담구분, *상담인원, *학년도, *상담일자, 학년, 성별, *상담제목, *상담매체구분
+
+                middle_value3 = ('일반 상담은 상담 내용을 입력하지 않습니다.', '0', '10', '교사')
+                new_new_new_records = [ record[:11] + middle_value3 + record[11:] for record in new_new_records]
 
             headers = ['*상담분류', '*Wee클래스', '*대분류', '*중분류', '*상담구분', '*상담인원','*학년도','*상담일자','학년','성별','*상담제목','*상담내용','*상담시간(시)','*상담시간(분)','*상담사소속','*상담매체구분']
-            return self._write_csv(file_path, headers, new_new_records)
+            return self._write_csv(file_path, headers, new_new_new_records)
         except sqlite3.Error as e:
             print(f"나이스 등록용 CSV 내보내기 오류: {e}")
             return False
@@ -85,7 +93,7 @@ class Database:
                 students = cursor.fetchall()
                 
                 cursor.execute('''
-                    SELECT s.name, cr.counsel_date, cr.target, cr.method, cr.content,
+                    SELECT s.name, cr.counsel_date, cr.target, cr.method, cr.category, cr.content,
                            cr.created_at
                     FROM counseling_records cr
                     JOIN students s ON cr.student_id = s.id
@@ -103,7 +111,7 @@ class Database:
                 writer.writerow([])
                 
                 writer.writerow(['=== 상담 기록 ==='])
-                writer.writerow(['학생이름', '상담일시', '상담대상', '상담방법', '상담내용', '생성일시'])
+                writer.writerow(['학생이름', '상담일시', '상담대상', '상담방법', '상담분류', '상담내용', '생성일시'])
                 writer.writerows(records)
             
             return True
@@ -136,20 +144,27 @@ class Database:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute('''
-                    SELECT s.name, cr.counsel_date, cr.target, cr.method, cr.content, cr.created_at
+                    SELECT s.name, cr.counsel_date, cr.target, cr.method, cr.category, cr.content, cr.created_at
                     FROM counseling_records cr
                     JOIN students s ON cr.student_id = s.id
                     ORDER BY s.name, cr.counsel_date
                 ''')
                 records = cursor.fetchall()
 
-            headers = ['학생이름', '상담일시', '상담대상', '상담방법', '상담내용', '생성일시']
+            headers = ['학생이름', '상담일시', '상담대상', '상담방법', '상담분류', '상담내용', '생성일시']
             return self._write_csv(file_path, headers, records)
         except sqlite3.Error as e:
             print(f"상담 기록 CSV 내보내기 오류: {e}")
             return False
 
     def init_database(self):
+        try:
+            self.create_tables()
+            self.update_schema()
+        except sqlite3.Error as e:
+            print(f"데이터베이스 초기화 오류: {e}")
+    
+    def create_tables(self):
         """데이터베이스 및 테이블 초기화"""
         try:
             with self.get_connection() as conn:
@@ -175,6 +190,7 @@ class Database:
                     counsel_date TIMESTAMP NOT NULL,
                     target TEXT NOT NULL,
                     method TEXT NOT NULL,
+                    category TEXT NOT NULL,
                     content TEXT NOT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (student_id) REFERENCES students (id) ON DELETE CASCADE
@@ -182,7 +198,20 @@ class Database:
                 ''')
                 conn.commit()
         except sqlite3.Error as e:
-            print(f"데이터베이스 초기화 오류: {e}")
+            print(f"데이터베이스 생성 오류: {e}")
+
+    def update_schema(self):
+        """데이터 베이스 스키마 업데이트"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("PRAGMA table_info(counseling_records)")
+                columns = [info[1] for info in cursor.fetchall()]
+                if 'category' not in columns:
+                    cursor.execute("ALTER TABLE counseling_records ADD COLUMN category TEXT")
+                    conn.commit()
+        except sqlite3.Error as e:
+            print(f"데이터베이스 스키마 업데이트 오류: {e}")
 
     def add_student(self, name, info=None):
         """학생 추가"""
@@ -317,14 +346,15 @@ class Database:
                     student_id = student_id_row[0]
                     sql = '''
                         INSERT INTO counseling_records (
-                            student_id, counsel_date, target, method, content
-                        ) VALUES (?, ?, ?, ?, ?)
+                            student_id, counsel_date, target, method, category, content
+                        ) VALUES (?, ?, ?, ?, ?, ?)
                     '''
                     params = (
                         student_id,
                         record['일시'],
                         record['대상'],
                         record['방법'],
+                        record['분류'],
                         record['내용']
                     )
                     cursor.execute(sql, params)
@@ -341,7 +371,7 @@ class Database:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute('''
-                    SELECT cr.id, counsel_date, target, method, content
+                    SELECT cr.id, counsel_date, target, method, category, content
                     FROM counseling_records cr
                     JOIN students s ON cr.student_id = s.id
                     WHERE s.name = ?
@@ -350,7 +380,7 @@ class Database:
                 
                 return [{
                     'id': row[0], '일시': row[1], '대상': row[2],
-                    '방법': row[3], '내용': row[4]
+                    '방법': row[3], '분류': row[4], '내용': row[5]
                 } for row in cursor.fetchall()]
         except sqlite3.Error as e:
             print(f"상담 기록 조회 오류: {e}")
@@ -362,7 +392,7 @@ class Database:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute('''
-                    SELECT id, counsel_date, target, method, content
+                    SELECT id, counsel_date, target, method, category, content
                     FROM counseling_records WHERE id = ?
                 ''', (record_id,))
                 row = cursor.fetchone()
@@ -373,7 +403,8 @@ class Database:
                     '일시': row[1],
                     '대상': row[2],
                     '방법': row[3],
-                    '내용': row[4]
+                    '분류': row[4],
+                    '내용': row[5]
                 }
             return None
         except sqlite3.Error as e:
@@ -384,13 +415,14 @@ class Database:
         """상담 기록 업데이트"""
         sql = '''
             UPDATE counseling_records SET
-                counsel_date = ?, target = ?, method = ?, content = ?
+                counsel_date = ?, target = ?, method = ?, category = ?, content = ?
             WHERE id = ?
         '''
         params = (
             record_data['일시'],
             record_data['대상'],
             record_data['방법'],
+            record_data['분류'],
             record_data['내용'],
             record_id
         )

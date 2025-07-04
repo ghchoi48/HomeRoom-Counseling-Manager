@@ -121,12 +121,19 @@ class EditCounselDialog(QDialog):
         self.method_combo.addItems(['면담', '전화상담', '사이버상담'])
         self.method_combo.setCurrentText(record['방법'])
 
+        self.category_combo = QComboBox()
+        self.category_combo.setEditable(True)
+        self.category_combo.setMinimumWidth(200)
+        self.category_combo.addItems(['학업', '진로', '성격', '성', '대인관계', '가정 및 가족관계', '일탈 및 비행', '학교폭력 가해', '학교폭력 피해', '자해 및 자살', '정신건강', '컴퓨터 및 스마트폰 과사용', '정보제공', '기타'])
+        self.category_combo.setCurrentText(record['분류'])
+
         self.counsel_input = QTextEdit()
         self.counsel_input.setText(record['내용'])
         
         form_layout.addRow('상담 일시', self.datetime_edit)
         form_layout.addRow('상담 대상', self.target_combo)
         form_layout.addRow('상담 방법', self.method_combo)
+        form_layout.addRow('상담 분류', self.category_combo)
         form_layout.addRow('상담 내용', self.counsel_input)
         
         self.buttons = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel, self)
@@ -141,5 +148,6 @@ class EditCounselDialog(QDialog):
             '일시': self.datetime_edit.dateTime().toString("yyyy-MM-dd HH:mm"),
             '대상': self.target_combo.currentText(),
             '방법': self.method_combo.currentText(),
+            '분류': self.category_combo.currentText(),
             '내용': self.counsel_input.toPlainText().strip()
         } 

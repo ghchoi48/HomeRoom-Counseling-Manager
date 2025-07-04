@@ -204,7 +204,7 @@ class MainApp(QMainWindow):
             
         self.counsel_record_list.setEnabled(True)
         for rec in records:
-            summary = f"[{rec['일시']}] ({rec['대상']}, {rec['방법']}) \n {rec['내용']} \n"
+            summary = f"[{rec['일시']}] ({rec['대상']}, {rec['방법']}, {rec['분류']}) \n {rec['내용']} \n"
             item = QListWidgetItem(summary)
             item.setData(Qt.UserRole, rec['id'])
             self.counsel_record_list.addItem(item)
@@ -391,6 +391,14 @@ class MainApp(QMainWindow):
         self.method_combo.setMaximumWidth(200)
         self.method_combo.addItems(['면담', '전화상담', '사이버상담'])
         layout.addWidget(self.method_combo)
+
+        # 상담 분류 선택
+        layout.addWidget(QLabel('상담 분류'))
+        self.category_combo = QComboBox()
+        self.category_combo.setEditable(True)
+        self.category_combo.setMaximumWidth(200)
+        self.category_combo.addItems(['학업', '진로', '성격', '성', '대인관계', '가정 및 가족관계', '일탈 및 비행', '학교폭력 가해', '학교폭력 피해', '자해 및 자살', '정신건강', '컴퓨터 및 스마트폰 과사용', '정보제공', '기타'])
+        layout.addWidget(self.category_combo)
         
         # 상담 내용 입력
         layout.addWidget(QLabel('상담 내용'))
@@ -417,13 +425,14 @@ class MainApp(QMainWindow):
         dt = self.datetime_edit.dateTime().toString("yyyy-MM-dd HH:mm")
         target = self.target_combo.currentText()
         method = self.method_combo.currentText()
+        category = self.category_combo.currentText()
         content = self.counsel_input.toPlainText().strip()
         
         if not content:
             QMessageBox.warning(self, "입력 오류", "상담 내용을 입력하세요.")
             return
             
-        new_record = {'일시': dt, '대상': target, '방법': method, '내용': content}
+        new_record = {'일시': dt, '대상': target, '방법': method, '분류': category, '내용': content}
         if self.db.add_counsel_record(name, new_record):
             # 학생 정보 탭의 상담 기록 갱신
             if self.student_list.currentItem() and self.student_list.currentItem().text() == name:
