@@ -389,7 +389,7 @@ class MainApp(QMainWindow):
         self.method_combo = QComboBox()
         self.method_combo.setEditable(True)
         self.method_combo.setMaximumWidth(200)
-        self.method_combo.addItems(['대면', '전화', '온라인'])
+        self.method_combo.addItems(['면담', '전화상담', '사이버상담'])
         layout.addWidget(self.method_combo)
         
         # 상담 내용 입력
@@ -493,6 +493,10 @@ class MainApp(QMainWindow):
         btn_export_counseling = QPushButton("상담 기록만 내보내기")
         btn_export_counseling.clicked.connect(self.export_counseling_data)
         right_layout.addWidget(btn_export_counseling)
+
+        btn_export_counseling_for_neis = QPushButton("나이스 등록용 내보내기")
+        btn_export_counseling_for_neis.clicked.connect(self.export_counseling_data_for_neis)
+        right_layout.addWidget(btn_export_counseling_for_neis)
         
         right_layout.addStretch()  # 남은 공간을 채움
         layout.addLayout(right_layout, 1)
@@ -541,3 +545,18 @@ class MainApp(QMainWindow):
                 QMessageBox.information(self, "성공", f"상담 기록이 성공적으로 내보내졌습니다.\n저장 위치: {file_path}")
             else:
                 QMessageBox.critical(self, "오류", "상담 기록 내보내기에 실패했습니다.")
+
+    def export_counseling_data_for_neis(self):
+        # 나이스 등록용 상담 기록 CSV 내보내기
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, 
+            "나이스 등록용 상담 기록 내보내기", 
+            "나이스_등록용_상담일지_상담기록.csv", 
+            "CSV 파일 (*.csv)"
+        )
+        
+        if file_path:
+            if self.db.export_counseling_to_csv_for_neis(file_path):
+                QMessageBox.information(self, "성공", f"나이스 등록용 상담 파일이 성공적으로 내보내졌습니다.\n저장 위치: {file_path}")
+            else:
+                QMessageBox.critical(self, "오류", "나이스 등록용 상담 파일 내보내기에 실패했습니다.")

@@ -45,6 +45,30 @@ class Database:
         except IOError as e:
             print(f"CSV 파일 쓰기 오류: {e}")
             return False
+        
+    def export_counseling_to_csv_for_neis(self, file_path):
+        """나이스 등록용 CSV 파일을 내보냅니다."""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT REPLACE(date(cr.counsel_date), '-', ''), cr.content, cr.method
+                    FROM counseling_records cr
+                    JOIN students s ON cr.student_id = s.id
+                    ORDER BY cr.counsel_date
+                ''')
+                records = cursor.fetchall()
+                front_value = ('일반상담', '일반', '상담', '개인상담', '상담구분', '1', '2025')
+                middle_value1 = ('','')
+                new_records = [ front_value + record[:1] + middle_value1 + record[1:] for record in records]
+                middle_value2 = ('일반 상담은 상담 내용을 입력하지 않습니다.', '0', '10', '교사')
+                new_new_records = [ record[:11] + middle_value2 + record[11:] for record in new_records]
+
+            headers = ['*상담분류', '*Wee클래스', '*대분류', '*중분류', '*상담구분', '*상담인원','*학년도','*상담일자','학년','성별','*상담제목','*상담내용','*상담시간(시)','*상담시간(분)','*상담사소속','*상담매체구분']
+            return self._write_csv(file_path, headers, new_new_records)
+        except sqlite3.Error as e:
+            print(f"나이스 등록용 CSV 내보내기 오류: {e}")
+            return False
 
     def export_to_csv(self, file_path):
         """데이터베이스의 모든 데이터를 CSV 파일로 내보냅니다."""

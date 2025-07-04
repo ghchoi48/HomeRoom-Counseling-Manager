@@ -118,7 +118,7 @@ class EditCounselDialog(QDialog):
         self.method_combo = QComboBox()
         self.method_combo.setEditable(True)
         self.method_combo.setMinimumWidth(200)
-        self.method_combo.addItems(['대면', '전화', '온라인'])
+        self.method_combo.addItems(['면담', '전화상담', '사이버상담'])
         self.method_combo.setCurrentText(record['방법'])
 
         self.counsel_input = QTextEdit()
