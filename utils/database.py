@@ -52,7 +52,7 @@ class Database:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute('''
-                    SELECT cr.category, REPLACE(date(cr.counsel_date), '-', ''), cr.content, cr.method
+                    SELECT cr.category, REPLACE(date(cr.counsel_date), '-', ''), cr.category, cr.method
                     FROM counseling_records cr
                     JOIN students s ON cr.student_id = s.id
                     ORDER BY cr.counsel_date

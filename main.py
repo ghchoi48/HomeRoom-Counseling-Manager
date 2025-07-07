@@ -6,7 +6,7 @@ HomeRoom Counseling Manager
 import sys
 from PySide6.QtWidgets import QApplication, QMessageBox
 
-from database import Database
+from utils.database import Database
 from utils.config_manager import is_password_set, check_password, set_password
 from utils.theme_manager import apply_theme_to_app
 from ui.dialogs import CreatePasswordDialog, PasswordDialog
