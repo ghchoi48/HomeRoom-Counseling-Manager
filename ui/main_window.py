@@ -566,6 +566,6 @@ class MainApp(QMainWindow):
         
         if file_path:
             if self.db.export_counseling_to_csv_for_neis(file_path):
-                QMessageBox.information(self, "성공", f"나이스 등록용 상담 파일이 성공적으로 내보내졌습니다.\n저장 위치: {file_path}")
+                QMessageBox.information(self, "성공", f"나이스 등록용 상담 파일이 성공적으로 내보내졌습니다.\n저장 위치: {file_path}\n\n파일을 [나이스]-[상담관리]-[상담현황]에서 자료 올리기 버튼으로 업로드 하세요.")
             else:
                 QMessageBox.critical(self, "오류", "나이스 등록용 상담 파일 내보내기에 실패했습니다.")
