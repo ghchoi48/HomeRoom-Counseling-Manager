@@ -55,7 +55,7 @@ class MainApp(QMainWindow):
 
     def show_update_dialog(self, latest_version, update_content):
         # 업데이트 알림 대화상자 표시 함수
-        message = f"새로운 버전({latest_version})이 있습니다.\n\n업데이트 내용:\n{update_content}\n\n다운로드 페이지로 이동하시겠습니까?"
+        message = f"새로운 버전({latest_version})이 있습니다.\n\n업데이트 내용:\n{update_content}\n\n업데이트 방법:\ndatabase.db와 settings.ini는 그대로 두고 실행파일만 교체해주세요.\n\n다운로드 페이지로 이동하시겠습니까?"
         reply = QMessageBox.question(
             self,
             "업데이트 가능",
