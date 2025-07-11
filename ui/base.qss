@@ -1,0 +1,390 @@
+/*
+ * =================================================================================================
+ *
+ * Base Stylesheet Template
+ * 
+ * - Uses placeholders like {{primary_text}} which are replaced by main.py
+ *
+ * =================================================================================================
+ */
+
+/* --- Global Styles --- */
+QWidget {
+    font-family: {{font_family}};
+    color: {{text_primary}};
+    background-color: transparent;
+}
+
+QMainWindow, QDialog {
+    background-color: {{window_bg}};
+}
+
+/* --- QLabel --- */
+QLabel {
+    background-color: transparent;
+    color: {{text_primary}};
+    padding: 4px;
+    font-size: 14px;
+}
+
+QLabel[class~="title"] {
+    color: {{text_title}};
+    font-size: 24px;
+    font-weight: 600;
+}
+
+QLabel[class~="subtitle"] {
+    color: {{text_secondary}};
+    font-size: 16px;
+    font-weight: 500;
+    padding-bottom: 8px;
+}
+
+QLabel[class~="caption"] {
+    color: {{text_disabled}};
+    font-size: 12px;
+}
+
+QLabel[class~="error"] {
+    color: {{text_error}};
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* --- QPushButton --- */
+QPushButton {
+    background-color: {{interactive_primary}};
+    color: {{text_button}};
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    min-width: 80px;
+    font-size: 14px;
+}
+
+QPushButton:hover {
+    background-color: {{interactive_primary_hover}};
+}
+
+QPushButton:pressed {
+    background-color: {{interactive_primary_pressed}};
+}
+
+QPushButton:disabled {
+    background-color: {{bg_disabled}};
+    color: {{text_disabled}};
+}
+
+/* Success Button */
+QPushButton[class~="success"] { background-color: {{interactive_success}}; }
+QPushButton[class~="success"]:hover { background-color: {{interactive_success_hover}}; }
+QPushButton[class~="success"]:pressed { background-color: {{interactive_success_pressed}}; }
+
+/* Danger Button */
+QPushButton[class~="danger"] { background-color: {{interactive_danger}}; }
+QPushButton[class~="danger"]:hover { background-color: {{interactive_danger_hover}}; }
+QPushButton[class~="danger"]:pressed { background-color: {{interactive_danger_pressed}}; }
+
+/* Warning Button */
+QPushButton[class~="warning"] { background-color: {{interactive_warning}}; color: {{text_button_warning}}; }
+QPushButton[class~="warning"]:hover { background-color: {{interactive_warning_hover}}; }
+QPushButton[class~="warning"]:pressed { background-color: {{interactive_warning_pressed}}; }
+
+/* Secondary Button */
+QPushButton[class~="secondary"] { background-color: {{interactive_secondary}}; color: {{text_primary}}; }
+QPushButton[class~="secondary"]:hover { background-color: {{interactive_secondary_hover}}; }
+QPushButton[class~="secondary"]:pressed { background-color: {{interactive_secondary_pressed}}; }
+
+/* --- Theme Toggle Button (Icon Only) --- */
+QPushButton[class~="theme-toggle-button"] {
+    min-width: 40px;
+    max-width: 40px;
+    min-height: 40px;
+    max-height: 40px;
+    padding: 0px;
+    border-radius: 20px; /* Make it circular */
+    background-color: transparent; /* No background by default */
+    border: 1px solid {{border_default}}; /* Add border */
+}
+
+QPushButton[class~="theme-toggle-button"]:hover {
+    background-color: {{bg_tab_hover}}; /* Subtle hover effect */
+}
+
+QPushButton[class~="theme-toggle-button"]:pressed {
+    background-color: {{bg_tab_selected}}; /* Subtle pressed effect */
+}
+
+QPushButton[class~="theme-toggle-button"]::icon {
+    width: 24px;
+    height: 24px;
+    margin: 0px;
+    padding: 0px;
+}
+
+
+
+
+/* --- QLineEdit, QTextEdit, QPlainTextEdit --- */
+QLineEdit, QTextEdit, QPlainTextEdit {
+    background-color: {{bg_element_white}};
+    border: 1px solid {{border_default}};
+    border-radius: 6px;
+    padding: 8px;
+    color: {{text_primary}};
+}
+
+QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {
+    border: 1px solid {{border_focus}};
+    outline: 1px solid {{border_focus}};
+}
+
+QLineEdit:disabled, QTextEdit:disabled, QPlainTextEdit:disabled {
+    background-color: {{bg_disabled}};
+    color: {{text_disabled}};
+    border-color: {{border_disabled}};
+}
+
+/* --- QComboBox --- */
+QComboBox {
+    background-color: {{bg_element_white}};
+    border: 1px solid {{border_default}};
+    border-radius: 6px;
+    padding: 8px;
+    min-width: 100px;
+    color: {{text_primary}};
+}
+
+QComboBox:hover { border-color: {{border_subtle}}; }
+QComboBox:focus { border: 1px solid {{border_focus}}; outline: 1px solid {{border_focus}}; }
+
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 20px;
+    border-left-width: 1px;
+    border-left-color: {{border_default}};
+    border-left-style: solid;
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+QComboBox::down-arrow {
+    image: {{icon_combo_arrow}};
+    width: 12px;
+    height: 12px;
+}
+
+QComboBox QAbstractItemView {
+    background-color: {{bg_element_white}};
+    border: 1px solid {{border_light}};
+    border-radius: 6px;
+    selection-background-color: {{interactive_primary}};
+    selection-color: {{text_selection}};
+    color: {{text_primary}};
+    padding: 4px;
+}
+
+/* --- QDateTimeEdit, QDateEdit, QTimeEdit --- */
+QDateTimeEdit, QDateEdit, QTimeEdit {
+    background-color: {{bg_element_white}};
+    border: 1px solid {{border_default}};
+    border-radius: 6px;
+    padding: 8px;
+    color: {{text_primary}};
+}
+
+QDateTimeEdit:focus, QDateEdit:focus, QTimeEdit:focus {
+    border: 1px solid {{border_focus}};
+    outline: 1px solid {{border_focus}};
+}
+
+QDateTimeEdit::up-button, QDateEdit::up-button, QTimeEdit::up-button {
+    subcontrol-origin: border;
+    subcontrol-position: top right;
+    width: 20px;
+    border-left: 1px solid {{border_default}};
+    border-bottom: 1px solid {{border_default}};
+    border-top-right-radius: 6px;
+    background-color: {{bg_element_white}};
+}
+
+QDateTimeEdit::down-button, QDateEdit::down-button, QTimeEdit::down-button {
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+    width: 20px;
+    border-left: 1px solid {{border_default}};
+    border-top: 1px solid {{border_default}};
+    border-bottom-right-radius: 6px;
+    background-color: {{bg_element_white}};
+}
+
+QDateTimeEdit::up-button:hover, QDateEdit::up-button:hover, QTimeEdit::up-button:hover,
+QDateTimeEdit::down-button:hover, QDateEdit::down-button:hover, QTimeEdit::down-button:hover {
+    background-color: {{bg_tab_hover}};
+}
+
+QDateTimeEdit::up-arrow, QDateEdit::up-arrow, QTimeEdit::up-arrow {
+    image: {{icon_up_arrow}}; /* SVG for up arrow */
+    width: 10px;
+    height: 10px;
+}
+
+QDateTimeEdit::down-arrow, QDateEdit::down-arrow, QTimeEdit::down-arrow {
+    image: {{icon_combo_arrow}}; /* Reusing down_arrow.svg */
+    width: 10px;
+    height: 10px;
+}
+
+/* --- QCheckBox & QRadioButton --- */
+QCheckBox, QRadioButton { spacing: 8px; color: {{text_primary}}; }
+QCheckBox::indicator, QRadioButton::indicator { width: 16px; height: 16px; }
+
+QCheckBox::indicator {
+    border: 1px solid {{border_default}};
+    border-radius: 4px;
+    background-color: {{bg_element_white}};
+}
+QCheckBox::indicator:hover { border-color: {{border_subtle}}; }
+QCheckBox::indicator:checked {
+    background-color: {{checkbox_checked_bg}};
+    border-color: {{checkbox_checked_border}};
+    image: {{icon_checkbox_check}};
+}
+
+QRadioButton::indicator {
+    border: 1px solid {{border_default}};
+    border-radius: 8px;
+    background-color: {{bg_element_white}};
+}
+QRadioButton::indicator:hover { border-color: {{border_subtle}}; }
+QRadioButton::indicator:checked {
+    border: 1px solid {{border_radio_checked}}; /* 테두리 색상 유지 */
+    background-color: {{bg_element_white}}; /* 배경은 흰색 유지 */
+    image: {{icon_radio_dot}}; /* 중앙에 점 아이콘 추가 */
+}
+
+/* --- QSlider --- */
+QSlider::groove:horizontal {
+    border: none;
+    height: 6px;
+    background: {{slider_groove}};
+    border-radius: 3px;
+}
+
+QSlider::handle:horizontal {
+    background: {{interactive_primary}};
+    border: 2px solid {{slider_handle_border}};
+    width: 16px;
+    height: 16px;
+    margin: -7px 0;
+    border-radius: 10px;
+}
+
+/* --- QProgressBar --- */
+QProgressBar {
+    border: 1px solid {{border_default}};
+    border-radius: 6px;
+    text-align: center;
+    background-color: {{bg_progressbar}};
+    color: {{text_progressbar}};
+}
+
+QProgressBar::chunk {
+    background-color: {{interactive_primary}};
+    border-radius: 6px;
+}
+
+/* --- QScrollBar --- */
+QScrollBar:vertical {
+    border: none;
+    background: {{bg_scrollbar}};
+    width: 12px;
+    margin: 0px;
+}
+QScrollBar::handle:vertical {
+    background: {{scrollbar_handle}};
+    min-height: 20px;
+    border-radius: 6px;
+}
+QScrollBar::handle:vertical:hover { background: {{scrollbar_handle_hover}}; }
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }
+
+QScrollBar:horizontal {
+    border: none;
+    background: {{bg_scrollbar}};
+    height: 12px;
+    margin: 0px;
+}
+QScrollBar::handle:horizontal {
+    background: {{scrollbar_handle}};
+    min-width: 20px;
+    border-radius: 6px;
+}
+QScrollBar::handle:horizontal:hover { background: {{scrollbar_handle_hover}}; }
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0px; }
+
+/* --- QTableView / QListView --- */
+QTableView, QListView {
+    border: 1px solid {{border_light}};
+    border-radius: 6px;
+    background-color: {{bg_element_white}};
+    selection-background-color: {{interactive_primary}};
+    selection-color: {{text_selection}};
+    color: {{text_primary}};
+}
+
+QHeaderView::section {
+    background-color: {{bg_header}};
+    color: {{text_header}};
+    padding: 8px;
+    border: none;
+    border-bottom: 1px solid {{border_light}};
+    font-weight: 600;
+}
+
+QHeaderView::section:last { border-right: none; }
+
+
+
+/* --- QTabWidget --- */
+QTabWidget::pane {
+    border: 1px solid {{border_light}};
+    border-radius: 6px;
+    padding: 16px;
+}
+
+QTabBar::tab {
+    background: {{bg_tab}};
+    color: {{text_secondary}};
+    border: 1px solid transparent;
+    border-bottom: none;
+    padding: 8px 16px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+}
+
+QTabBar::tab:hover { background: {{bg_tab_hover}}; }
+QTabBar::tab:selected {
+    background: {{bg_tab_selected}};
+    color: {{text_primary}};
+    border-color: {{border_light}};
+    font-weight: 600;
+}
+
+/* --- QGroupBox --- */
+QGroupBox {
+    color: {{text_title}};
+    border: 1px solid {{border_light}};
+    border-radius: 6px;
+    padding-top: 20px;
+    margin-top: 10px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 10px;
+    left: 10px;
+}

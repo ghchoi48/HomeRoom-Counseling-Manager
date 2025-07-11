@@ -1,4 +1,5 @@
 # 메인 윈도우 모듈
+import sys
 
 from PySide6.QtWidgets import (
     QMainWindow, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout,
@@ -14,16 +15,19 @@ from ui.dialogs import (
 )
 from utils.config_manager import check_password, set_password
 from utils.updater import CURRENT_VERSION, UpdateChecker
+from utils.theme_manager import ThemeManager
 
 
 class MainApp(QMainWindow):
     #메인 애플리케이션 윈도우 클래스
-    def __init__(self, db):
+    def __init__(self, db, theme_manager: ThemeManager):
         super().__init__()
         self.setWindowTitle('HomeRoom Counseling Manager')
         self.setGeometry(100, 100, 900, 700)
         self.setFixedSize(QSize(900, 700))
-        
+
+        self.theme_manager = theme_manager
+
         # 데이터베이스 설정
         self.db = db
         
@@ -83,13 +87,16 @@ class MainApp(QMainWindow):
         
         # 왼쪽: 학생 목록 및 버튼
         left_layout = QVBoxLayout()
-        left_layout.addWidget(QLabel("학생 목록"))
+        student_list_title = QLabel("학생 목록")
+        student_list_title.setProperty("class", "subtitle")
+        left_layout.addWidget(student_list_title)
         self.student_list = QListWidget()
         self.student_list.addItems(self.db.get_all_students())
         left_layout.addWidget(self.student_list)
         
         btn_add = QPushButton('학생 추가')
         btn_del = QPushButton('학생 삭제')
+        btn_del.setProperty("class", "danger")
         left_layout.addWidget(btn_add)
         left_layout.addWidget(btn_del)
         layout.addLayout(left_layout, 1)
@@ -102,7 +109,6 @@ class MainApp(QMainWindow):
         info_form = QFormLayout(info_group)
         self.phone_edit = QLineEdit()
         self.gender_edit = QComboBox()
-        self.gender_edit.setEditable(True)
         self.gender_edit.addItems(['남자', '여자', '기타'])
         self.gender_edit.setMinimumWidth(100)
         self.birth_edit = QDateTimeEdit()
@@ -118,17 +124,22 @@ class MainApp(QMainWindow):
         self.memo_edit.setPlaceholderText("학생에 관한 메모를 입력하세요.")
         btn_save_info = QPushButton("학생 정보 저장")
 
-        info_form.addRow(QLabel("학생 정보"))
+        
+        stu_title = QLabel("학생 정보")
+        stu_title.setProperty("class", "subtitle")
+        info_form.addRow(stu_title)
         info_form.addRow("이름", self.name_edit)
         info_form.addRow("성별", self.gender_edit)
         info_form.addRow("생년월일", self.birth_edit)
         info_form.addRow("연락처", self.phone_edit)
-        info_form.addRow(QLabel(""))
-        info_form.addRow(QLabel("가족 정보"))
+        fam_title = QLabel("가족 정보")
+        fam_title.setProperty("class", "subtitle")
+        info_form.addRow(fam_title)
         info_form.addRow("보호자 연락처1", self.family_phone_edit1)
         info_form.addRow("보호자 연락처2", self.family_phone_edit2)
-        info_form.addRow(QLabel(""))
-        info_form.addRow(QLabel("메모"))
+        memo_title = QLabel("메모")
+        memo_title.setProperty("class", "subtitle")
+        info_form.addRow(memo_title)
         info_form.addRow(self.memo_edit)
 
         center_layout.addWidget(info_group)
@@ -139,13 +150,16 @@ class MainApp(QMainWindow):
         right_layout = QVBoxLayout()
 
         # --- 상담 기록 표시 및 삭제 ---
-        right_layout.addWidget(QLabel("상담 기록"))
+        counsel_record_title = QLabel("상담 기록")
+        counsel_record_title.setProperty("class", "subtitle")
+        right_layout.addWidget(counsel_record_title)
         self.counsel_record_list = QListWidget()
         right_layout.addWidget(self.counsel_record_list)
         
         buttons_layout = QHBoxLayout()
         btn_edit_record = QPushButton('상담기록 수정')
         btn_del_record = QPushButton('상담기록 삭제')
+        btn_del_record.setProperty("class", "danger")
         buttons_layout.addWidget(btn_edit_record)
         buttons_layout.addWidget(btn_del_record)
 
@@ -358,47 +372,55 @@ class MainApp(QMainWindow):
 
         layout = QVBoxLayout()
         self.counsel_tab.setLayout(layout)
-        
+
+        row1 = QHBoxLayout()
+        row2 = QHBoxLayout()
+        row3 = QHBoxLayout()
+
         # 상담 학생 선택
-        layout.addWidget(QLabel('학생 이름'))
+        row1.addWidget(QLabel('학생 이름'))
         self.name_combo = QComboBox()
-        self.name_combo.setEditable(True)
         self.name_combo.setMaximumWidth(200)
         self.name_combo.addItems(self.db.get_all_students())
-        layout.addWidget(self.name_combo)
+        row1.addWidget(self.name_combo)
+        row1.addStretch()
 
-        # 상담 대상
-        layout.addWidget(QLabel('상담 대상'))
-        self.target_combo = QComboBox()
-        self.target_combo.setEditable(True)
-        self.target_combo.addItems(['학생 본인', '보호자', '친구', '기타'])
-        self.target_combo.setMaximumWidth(200)
-        layout.addWidget(self.target_combo)
-        
         # 상담 일시 선택
-        layout.addWidget(QLabel('상담 일시'))
+        row2.addWidget(QLabel('상담 일시'))
         self.datetime_edit = QDateTimeEdit()
         self.datetime_edit.setDateTime(QDateTime.currentDateTime())
         self.datetime_edit.setDisplayFormat("yyyy-MM-dd HH:mm")
         self.datetime_edit.setMaximumWidth(200)
         self.datetime_edit.setCalendarPopup(True)
-        layout.addWidget(self.datetime_edit)
-        
+        row2.addWidget(self.datetime_edit)
+        row2.addStretch()
+
+        # 상담 대상
+        row3.addWidget(QLabel('상담 대상'))
+        self.target_combo = QComboBox()
+        self.target_combo.addItems(['학생 본인', '보호자', '친구', '기타'])
+        self.target_combo.setMaximumWidth(200)
+        row3.addWidget(self.target_combo)
+        row3.addSpacing(20)
         # 상담 방법 선택
-        layout.addWidget(QLabel('상담 방법'))
+        row3.addWidget(QLabel('상담 방법'))
         self.method_combo = QComboBox()
-        self.method_combo.setEditable(True)
         self.method_combo.setMaximumWidth(200)
         self.method_combo.addItems(['면담', '전화상담', '사이버상담'])
-        layout.addWidget(self.method_combo)
+        row3.addWidget(self.method_combo)
+        row3.addSpacing(20)
 
         # 상담 분류 선택
-        layout.addWidget(QLabel('상담 분류'))
+        row3.addWidget(QLabel('상담 분류'))
         self.category_combo = QComboBox()
-        self.category_combo.setEditable(True)
         self.category_combo.setMaximumWidth(200)
         self.category_combo.addItems(['학업', '진로', '성격', '성', '대인관계', '가정 및 가족관계', '일탈 및 비행', '학교폭력 가해', '학교폭력 피해', '자해 및 자살', '정신건강', '컴퓨터 및 스마트폰 과사용', '정보제공', '기타'])
-        layout.addWidget(self.category_combo)
+        row3.addWidget(self.category_combo)
+        row3.addStretch()
+
+        layout.addLayout(row1)
+        layout.addLayout(row2)
+        layout.addLayout(row3)
         
         # 상담 내용 입력
         layout.addWidget(QLabel('상담 내용'))
@@ -504,6 +526,7 @@ class MainApp(QMainWindow):
         right_layout.addWidget(btn_export_counseling)
 
         btn_export_counseling_for_neis = QPushButton("나이스 등록용 내보내기")
+        btn_export_counseling_for_neis.setProperty("class", "success")
         btn_export_counseling_for_neis.clicked.connect(self.export_counseling_data_for_neis)
         right_layout.addWidget(btn_export_counseling_for_neis)
         

@@ -1,0 +1,16 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+<qresource prefix="/">
+    <file>icons/check.png</file>
+    <file>icons/down_arrow_dark.png</file>
+    <file>icons/down_arrow.png</file>
+    <file>icons/icon.png</file>
+    <file>icons/left_arrow.png</file>
+    <file>icons/moon.png</file>
+    <file>icons/radio_dot.png</file>
+    <file>icons/right_arrow.png</file>
+    <file>icons/sun.png</file>
+    <file>icons/up_arrow.png</file>
+    <file>ui/base.qss</file>
+</qresource>
+</RCC>
