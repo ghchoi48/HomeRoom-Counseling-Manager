@@ -22,7 +22,7 @@ class MainApp(QMainWindow):
     #메인 애플리케이션 윈도우 클래스
     def __init__(self, db, theme_manager: ThemeManager):
         super().__init__()
-        self.setWindowTitle('HomeRoom Counseling Manager')
+        self.setWindowTitle('마음나래 Lite')
         self.setGeometry(100, 100, 900, 700)
         self.setFixedSize(QSize(900, 700))
 
@@ -493,7 +493,12 @@ class MainApp(QMainWindow):
         self.credit_tab.setLayout(layout)
         
         left_layout = QVBoxLayout()
-        left_layout.addWidget(QLabel('담임교사용 상담일지 프로그램'))
+        program_title = QLabel('마음나래 Lite')
+        program_title.setProperty("class", "title")
+        left_layout.addWidget(program_title)
+        program_discription = QLabel('학교에 근무하는 선생님들을 위한 상담 관리 프로그램')
+        program_discription.setProperty("class", "caption")
+        left_layout.addWidget(program_discription)
         left_layout.addWidget(QLabel(f'현재 버전: {CURRENT_VERSION}'))
         left_layout.addWidget(QLabel('만든이: 경상북도교육청 전문상담교사 최규호'))
         left_layout.addWidget(QLabel('라이센스: MIT Lisence'))

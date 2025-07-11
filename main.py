@@ -1,6 +1,6 @@
 """
-HomeRoom Counseling Manager
-담임교사용 상담일지 프로그램의 메인 진입점
+HeartWings Lite
+마음나래 Lite의 메인 진입점
 """
 
 import sys, os
