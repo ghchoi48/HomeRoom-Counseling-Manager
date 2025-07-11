@@ -20,7 +20,7 @@
 
 ### Screenshot
 
-![스크린샷 2025-06-25 100146](https://github.com/user-attachments/assets/342dbd12-7dd6-4812-85a7-b4da7ff3394e)
+<img width="902" height="732" alt="스크린샷 2025-07-11 143348" src="https://github.com/user-attachments/assets/f7a24cd3-4b87-4fc7-bb34-80292b4f035c" />
 
 ### Fucntions
 
