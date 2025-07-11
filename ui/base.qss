@@ -333,6 +333,8 @@ QTableView, QListView {
     selection-background-color: {{interactive_primary}};
     selection-color: {{text_selection}};
     color: {{text_primary}};
+    font-size: 14px;
+
 }
 
 QHeaderView::section {
