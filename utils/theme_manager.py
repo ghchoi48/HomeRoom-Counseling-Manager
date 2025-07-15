@@ -4,7 +4,8 @@ from PySide6.QtWidgets import QApplication
 
 # theme.py에서 색상 팔레트를 가져옵니다.
 # main.py에서 프로젝트 루트를 sys.path에 추가하므로 이 경로가 동작합니다.
-from ui.theme import PALETTE_LIGHT, PALETTE_DARK, DEFAULT_FONT
+from ui.theme import PALETTE_LIGHT, PALETTE_DARK
+from utils.config_manager import get_font_size
 
 
 class ThemeManager:
@@ -33,10 +34,7 @@ class ThemeManager:
             stylesheet = stylesheet.replace(f"{{{{{key}}}}}", value)
         
         # 글꼴 설정 적용
-        font_config = DEFAULT_FONT.copy()
-        font_config['font_size'] = self.font_size
-        for key, value in font_config.items():
-            stylesheet = stylesheet.replace(f"{{{{{key}}}}}", value)
+        stylesheet = stylesheet.replace("{{font_size}}", self.font_size)
 
         return stylesheet
 

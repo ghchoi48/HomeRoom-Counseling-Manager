@@ -57,7 +57,8 @@ def get_font_size():
     if os.path.exists(CONFIG_FILE):
         config.read(CONFIG_FILE, encoding='utf-8')
         if config.has_option(DISPLAY_SECTION, FONT_SIZE_OPTION):
-            return config.get(DISPLAY_SECTION, FONT_SIZE_OPTION)
+            size_str = config.get(DISPLAY_SECTION, FONT_SIZE_OPTION)
+            return size_str.replace('px', '').strip()
     return '14' # 기본값
 
 def set_font_size(size):
