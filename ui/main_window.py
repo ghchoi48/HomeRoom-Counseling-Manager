@@ -23,8 +23,8 @@ class MainApp(QMainWindow):
     def __init__(self, db, theme_manager: ThemeManager):
         super().__init__()
         self.setWindowTitle('마음나래 Lite')
-        self.setGeometry(100, 100, 900, 700)
-        self.setFixedSize(QSize(900, 700))
+        self.setGeometry(100, 100, 900, 800)
+        self.setFixedSize(QSize(900, 800))
 
         self.theme_manager = theme_manager
 
