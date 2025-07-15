@@ -504,6 +504,7 @@ class MainApp(QMainWindow):
         left_layout.addWidget(QLabel('라이센스: MIT Lisence'))
         github_label = QLabel('소스코드: <a href="https://github.com/ghchoi48/HomeRoom-Counseling-Manager">https://github.com/ghchoi48/HomeRoom-Counseling-Manager</a>')
         github_label.setOpenExternalLinks(True)
+        github_label.setWordWrap(True)
         left_layout.addWidget(github_label)
         
         left_layout.addStretch() # 남은 공간을 채움
@@ -515,7 +516,6 @@ class MainApp(QMainWindow):
         data_export_title = QLabel("데이터 내보내기")
         data_export_title.setProperty("class", "subtitle")
         data_export_caption = QLabel("데이터를 CSV 파일로 내보낼 수 있습니다.")
-        data_export_caption.setProperty("class", "caption")
         
         export_btn_row1 = QHBoxLayout()
         export_btn_row2 = QHBoxLayout()
