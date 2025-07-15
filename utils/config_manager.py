@@ -7,6 +7,9 @@ BASE_DIR = get_base_dir()
 CONFIG_FILE = os.path.join(BASE_DIR, 'settings.ini')
 PASSWORD_SECTION = 'security'
 PASSWORD_OPTION = 'password'
+DISPLAY_SECTION = 'display'
+FONT_SIZE_OPTION = 'fontsize'
+
 
 def _hash_password(password):
     # 암호를 비문화
@@ -46,4 +49,27 @@ def set_password(password):
     
     with open(CONFIG_FILE, 'w', encoding='utf-8') as configfile:
         config.write(configfile)
-    return True 
+    return True
+
+def get_font_size():
+    # 설정 파일에서 글꼴 크기를 가져옴
+    config = configparser.ConfigParser()
+    if os.path.exists(CONFIG_FILE):
+        config.read(CONFIG_FILE, encoding='utf-8')
+        if config.has_option(DISPLAY_SECTION, FONT_SIZE_OPTION):
+            return config.get(DISPLAY_SECTION, FONT_SIZE_OPTION)
+    return '14' # 기본값
+
+def set_font_size(size):
+    # 글꼴 크기를 설정 파일에 저장
+    config = configparser.ConfigParser()
+    if os.path.exists(CONFIG_FILE):
+        config.read(CONFIG_FILE, encoding='utf-8')
+
+    if not config.has_section(DISPLAY_SECTION):
+        config.add_section(DISPLAY_SECTION)
+        
+    config.set(DISPLAY_SECTION, FONT_SIZE_OPTION, str(size))
+    
+    with open(CONFIG_FILE, 'w', encoding='utf-8') as configfile:
+        config.write(configfile) 

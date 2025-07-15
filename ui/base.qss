@@ -11,6 +11,7 @@
 /* --- Global Styles --- */
 QWidget {
     font-family: {{font_family}};
+    font-size: {{font_size}};
     color: {{text_primary}};
     background-color: transparent;
 }
@@ -24,7 +25,6 @@ QLabel {
     background-color: transparent;
     color: {{text_primary}};
     padding: 4px;
-    font-size: 14px;
 }
 
 QLabel[class~="title"] {
@@ -47,7 +47,6 @@ QLabel[class~="caption"] {
 
 QLabel[class~="error"] {
     color: {{text_error}};
-    font-size: 14px;
     font-weight: 500;
 }
 
@@ -60,7 +59,6 @@ QPushButton {
     border-radius: 6px;
     font-weight: 500;
     min-width: 80px;
-    font-size: 14px;
 }
 
 QPushButton:hover {
@@ -333,7 +331,6 @@ QTableView, QListView {
     selection-background-color: {{interactive_primary}};
     selection-color: {{text_selection}};
     color: {{text_primary}};
-    font-size: 14px;
 
 }
 

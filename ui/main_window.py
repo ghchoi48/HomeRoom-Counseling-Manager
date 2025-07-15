@@ -13,7 +13,7 @@ from PySide6.QtCore import QDateTime, Qt, QSize, QThread
 from ui.dialogs import (
     ChangePasswordDialog, EditCounselDialog
 )
-from utils.config_manager import check_password, set_password
+from utils.config_manager import check_password, set_password, get_font_size, set_font_size
 from utils.updater import CURRENT_VERSION, UpdateChecker
 from utils.theme_manager import ThemeManager
 
@@ -509,6 +509,21 @@ class MainApp(QMainWindow):
         change_password_btn.clicked.connect(self.change_password)
         left_layout.addWidget(QLabel("암호를 잊었을 경우에는 settings.ini 파일을 삭제하세요.\n자료 보존을 위해 counseling.db 파일은 주기적으로 백업하세요."))
         left_layout.addWidget(change_password_btn)
+        
+        # 글꼴 크기 설정
+        font_size_label = QLabel("글꼴 크기:")
+        self.font_size_combo = QComboBox()
+        self.font_size_combo.addItems([str(i) for i in range(10, 21)])
+        current_font_size = get_font_size()
+        self.font_size_combo.setCurrentText(current_font_size)
+        self.font_size_combo.currentTextChanged.connect(self.change_font_size)
+        
+        font_layout = QHBoxLayout()
+        font_layout.addWidget(font_size_label)
+        font_layout.addWidget(self.font_size_combo)
+        font_layout.addStretch()
+        
+        left_layout.addLayout(font_layout)
         left_layout.addStretch() # 남은 공간을 채움
         layout.addLayout(left_layout, 1)
         
@@ -537,6 +552,11 @@ class MainApp(QMainWindow):
         
         right_layout.addStretch()  # 남은 공간을 채움
         layout.addLayout(right_layout, 1)
+
+    def change_font_size(self, size_str):
+        size = int(size_str)
+        set_font_size(size)
+        self.theme_manager.set_font_size(size)
 
     def export_all_data(self):
         # 전체 데이터 CSV 내보내기

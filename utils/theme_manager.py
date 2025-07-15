@@ -4,16 +4,17 @@ from PySide6.QtWidgets import QApplication
 
 # theme.py에서 색상 팔레트를 가져옵니다.
 # main.py에서 프로젝트 루트를 sys.path에 추가하므로 이 경로가 동작합니다.
-from ui.theme import PALETTE_LIGHT, PALETTE_DARK
+from ui.theme import PALETTE_LIGHT, PALETTE_DARK, DEFAULT_FONT
 
 
 class ThemeManager:
     """애플리케이션의 테마(라이트/다크)를 관리하는 클래스."""
 
-    def __init__(self):
+    def __init__(self, font_size="14px"):
         """ThemeManager를 초기화합니다."""
         self.is_dark_mode = (darkdetect.theme() == "Dark")
         self.base_style = self._load_stylesheet_from_resource()
+        self.font_size = font_size
 
     def _load_stylesheet_from_resource(self):
         """Qt 리소스 시스템에서 base.qss 파일을 안전하게 로드합니다."""
@@ -30,6 +31,13 @@ class ThemeManager:
         # 팔레트의 값을 스타일시트의 플레이스홀더에 적용합니다.
         for key, value in palette.items():
             stylesheet = stylesheet.replace(f"{{{{{key}}}}}", value)
+        
+        # 글꼴 설정 적용
+        font_config = DEFAULT_FONT.copy()
+        font_config['font_size'] = self.font_size
+        for key, value in font_config.items():
+            stylesheet = stylesheet.replace(f"{{{{{key}}}}}", value)
+
         return stylesheet
 
     def apply_theme(self):
@@ -37,6 +45,10 @@ class ThemeManager:
         palette = PALETTE_DARK if self.is_dark_mode else PALETTE_LIGHT
         stylesheet = self._create_stylesheet(palette)
         QApplication.instance().setStyleSheet(stylesheet)
+
+    def set_font_size(self, size):
+        self.font_size = f"{size}px"
+        self.apply_theme()
 
     def toggle_theme(self):
         """테마를 전환하고 변경사항을 적용합니다."""
