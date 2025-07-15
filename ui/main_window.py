@@ -39,7 +39,7 @@ class MainApp(QMainWindow):
         self.counsel_tab = QWidget()
         self.tabs.addTab(self.counsel_tab, '상담 기록')
         self.credit_tab = QWidget()
-        self.tabs.addTab(self.credit_tab, '프로그램 정보')
+        self.tabs.addTab(self.credit_tab, '프로그램 정보 및 설정')
         self.init_student_tab()
         self.init_counsel_tab()
         self.init_credit_tab()
@@ -505,51 +505,73 @@ class MainApp(QMainWindow):
         github_label = QLabel('소스코드: <a href="https://github.com/ghchoi48/HomeRoom-Counseling-Manager">https://github.com/ghchoi48/HomeRoom-Counseling-Manager</a>')
         github_label.setOpenExternalLinks(True)
         left_layout.addWidget(github_label)
-        change_password_btn = QPushButton("암호 변경")
-        change_password_btn.clicked.connect(self.change_password)
-        left_layout.addWidget(QLabel("암호를 잊었을 경우에는 settings.ini 파일을 삭제하세요.\n자료 보존을 위해 counseling.db 파일은 주기적으로 백업하세요."))
-        left_layout.addWidget(change_password_btn)
         
-        # 글꼴 크기 설정
-        font_size_label = QLabel("글꼴 크기:")
-        self.font_size_combo = QComboBox()
-        self.font_size_combo.addItems([str(i) for i in range(10, 21)])
-        current_font_size = get_font_size()
-        self.font_size_combo.setCurrentText(current_font_size)
-        self.font_size_combo.currentTextChanged.connect(self.change_font_size)
-        
-        font_layout = QHBoxLayout()
-        font_layout.addWidget(font_size_label)
-        font_layout.addWidget(self.font_size_combo)
-        font_layout.addStretch()
-        
-        left_layout.addLayout(font_layout)
         left_layout.addStretch() # 남은 공간을 채움
         layout.addLayout(left_layout, 1)
         
         right_layout = QVBoxLayout()
         
         # CSV 내보내기 섹션
-        right_layout.addWidget(QLabel("데이터 내보내기"))
-        right_layout.addWidget(QLabel("데이터를 CSV 파일로 내보낼 수 있습니다."))
+        data_export_title = QLabel("데이터 내보내기")
+        data_export_title.setProperty("class", "subtitle")
+        data_export_caption = QLabel("데이터를 CSV 파일로 내보낼 수 있습니다.")
+        data_export_caption.setProperty("class", "caption")
+        
+        export_btn_row1 = QHBoxLayout()
+        export_btn_row2 = QHBoxLayout()
         
         btn_export_all = QPushButton("전체 데이터 내보내기")
         btn_export_all.clicked.connect(self.export_all_data)
-        right_layout.addWidget(btn_export_all)
+        export_btn_row1.addWidget(btn_export_all)
         
         btn_export_students = QPushButton("학생 정보만 내보내기")
         btn_export_students.clicked.connect(self.export_students_data)
-        right_layout.addWidget(btn_export_students)
+        export_btn_row1.addWidget(btn_export_students)
         
         btn_export_counseling = QPushButton("상담 기록만 내보내기")
         btn_export_counseling.clicked.connect(self.export_counseling_data)
-        right_layout.addWidget(btn_export_counseling)
+        export_btn_row2.addWidget(btn_export_counseling)
 
         btn_export_counseling_for_neis = QPushButton("나이스 등록용 내보내기")
         btn_export_counseling_for_neis.setProperty("class", "success")
         btn_export_counseling_for_neis.clicked.connect(self.export_counseling_data_for_neis)
-        right_layout.addWidget(btn_export_counseling_for_neis)
+        export_btn_row2.addWidget(btn_export_counseling_for_neis)
+
+        # 글꼴 크기 설정
+        settings_label = QLabel("설정")
+        settings_label.setProperty("class", "subtitle")
         
+        font_size_label = QLabel("글꼴 크기:")
+        self.font_size_combo = QComboBox()
+        self.font_size_combo.addItems([str(i) for i in range(10, 21)])
+        current_font_size = get_font_size()
+        self.font_size_combo.setCurrentText(current_font_size)
+        self.font_size_combo.currentTextChanged.connect(self.change_font_size)
+        font_size_caption = QLabel("기본값은 13 입니다.")
+        font_size_caption.setProperty("class", "caption")
+        
+        font_layout = QHBoxLayout()
+        font_layout.addWidget(font_size_label)
+        font_layout.addWidget(self.font_size_combo)
+        font_layout.addStretch()
+
+        # 암호 변경 버튼
+        change_password_btn = QPushButton("암호 변경")
+        change_password_btn.clicked.connect(self.change_password)
+        change_password_caption = QLabel("암호를 잊었을 경우에는 settings.ini 파일을 삭제하세요.\n자료 보존을 위해 counseling.db 파일은 주기적으로 백업하세요.")
+        change_password_caption.setProperty("class", "caption")
+        
+        right_layout.addWidget(data_export_title)
+        right_layout.addWidget(data_export_caption)
+        right_layout.addLayout(export_btn_row1)
+        right_layout.addLayout(export_btn_row2)
+        right_layout.addSpacing(30)
+        right_layout.addWidget(settings_label)
+        right_layout.addLayout(font_layout)
+        right_layout.addWidget(font_size_caption)
+        right_layout.addSpacing(30)
+        right_layout.addWidget(change_password_btn)
+        right_layout.addWidget(change_password_caption)
         right_layout.addStretch()  # 남은 공간을 채움
         layout.addLayout(right_layout, 1)
 

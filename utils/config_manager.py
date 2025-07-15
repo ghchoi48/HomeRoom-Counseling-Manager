@@ -59,7 +59,7 @@ def get_font_size():
         if config.has_option(DISPLAY_SECTION, FONT_SIZE_OPTION):
             size_str = config.get(DISPLAY_SECTION, FONT_SIZE_OPTION)
             return size_str.replace('px', '').strip()
-    return '14' # 기본값
+    return '13' # 기본값
 
 def set_font_size(size):
     # 글꼴 크기를 설정 파일에 저장
