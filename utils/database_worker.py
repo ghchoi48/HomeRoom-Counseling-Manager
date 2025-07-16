@@ -10,9 +10,9 @@ class DatabaseWorker(QObject):
     # 작업 완료 후 결과를 메인 스레드로 보내는 시그널
     students_ready = Signal(list)
     student_info_ready = Signal(dict)
+    student_data_for_update_ready = Signal(dict)
     counsel_records_ready = Signal(list)
     counsel_record_ready = Signal(dict)
-    
     operation_success = Signal(str, object)  # 작업 종류와 결과 데이터를 전달
     operation_error = Signal(str)
 
@@ -78,7 +78,8 @@ class DatabaseWorker(QObject):
             # Check if updated name already exists for another student
             updated_name = info.get('이름')
             if updated_name and updated_name != existing_student.get('이름'):
-                if self.db.get_student_by_name(updated_name):
+                existing_same_name = self.db.get_student_by_name(updated_name)
+                if existing_same_name and existing_same_name['id'] != student_id:
                     self.operation_error.emit(f"'{updated_name}' 학생은 이미 존재합니다.")
                     return
 
@@ -118,7 +119,7 @@ class DatabaseWorker(QObject):
         """학생 이름으로 학생 정보 조회 (업데이트용)"""
         try:
             student_data = self.db.get_student(student_name)
-            self.student_info_ready.emit(student_data or {})
+            self.student_data_for_update_ready.emit(student_data or {})
         except Exception as e:
             self.operation_error.emit(f"학생 정보 조회 실패: {e}")
             

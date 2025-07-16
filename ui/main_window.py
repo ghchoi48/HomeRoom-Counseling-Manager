@@ -38,6 +38,7 @@ class MainApp(QMainWindow):
         # DatabaseWorker 시그널 연결
         self.db_worker.students_ready.connect(self.handle_students_ready)
         self.db_worker.student_info_ready.connect(self.handle_student_info_ready)
+        self.db_worker.student_data_for_update_ready.connect(self.handle_student_data_for_update)
         self.db_worker.counsel_records_ready.connect(self.handle_counsel_records_ready)
         self.db_worker.counsel_record_ready.connect(self.handle_counsel_record_ready)
         self.db_worker.operation_success.connect(self.handle_db_operation_success)
@@ -171,7 +172,6 @@ class MainApp(QMainWindow):
             self.student_list.addItem(data)
             self.student_list.sortItems()
             self.refresh_student_list()
-            QMessageBox.information(self, "저장 완료", "학생 정보가 성공적으로 저장되었습니다.")
         elif operation_type == "delete_student":
             row = self.student_list.currentRow()
             self.student_list.takeItem(row)
@@ -349,24 +349,10 @@ class MainApp(QMainWindow):
             QMessageBox.warning(self, "입력 오류", "학생 이름은 비워둘 수 없습니다.")
             self.name_edit.setText(original_name) # 원래 이름으로 복원
             return
-        
-        try:
-            self.db_worker.student_info_ready.disconnect(self._temp_handle_student_data_for_update_wrapper)
-        except TypeError: # Signal not connected
-            pass
-        self.db_worker.student_info_ready.connect(self._temp_handle_student_data_for_update_wrapper)
 
         # 선택된 학생 정보 불러오기
         self.db_worker.get_student_by_name_for_update(original_name)
         self.db_thread.start()
-
-    def _temp_handle_student_data_for_update_wrapper(self, student_data):
-        # 학생 데이터를 불러온 후 처리
-        try:
-            self.db_worker.student_info_ready.disconnect(self._temp_handle_student_data_for_update_wrapper)
-        except TypeError: # Signal not connected
-            pass
-        self.handle_student_data_for_update(student_data)
 
     def edit_counsel_record(self):
         # 상담 기록 수정 함수
