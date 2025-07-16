@@ -52,22 +52,17 @@ def main():
         if dialog.exec():
             password = dialog.get_password()
             if check_password(password):
-                db = Database()
-                if db.check_connection():
-                    break
-                else:
-                    QMessageBox.critical(None, '오류', '데이터베이스에 연결할 수 없습니다.')
-                    sys.exit(1)
+                # 데이터베이스 연결 확인은 이제 DatabaseWorker 내부에서 처리
+                break
             else:
                 QMessageBox.warning(None, '오류', '암호가 올바르지 않습니다.')
         else:
             sys.exit(0)
 
     # 메인 윈도우 실행
-    if db:
-        main_window = MainApp(db, theme_manager)
-        main_window.show()
-        sys.exit(app.exec())
+    main_window = MainApp(theme_manager)
+    main_window.show()
+    sys.exit(app.exec())
 
 if __name__ == '__main__':
     main()

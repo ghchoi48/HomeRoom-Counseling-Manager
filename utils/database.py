@@ -34,6 +34,13 @@ class Database:
         except sqlite3.DatabaseError:
             return False
 
+    def close_connection(self):
+        """데이터베이스 연결을 닫습니다."""
+        # 이 클래스는 연결을 유지하지 않으므로 아무것도 하지 않습니다.
+        # get_connection()이 컨텍스트 관리자를 사용하여 매번 연결을 열고 닫습니다.
+        # 그러나 app.aboutToQuit 시그널에 연결하기 위해 이 메서드를 추가합니다.
+        pass
+
     def _write_csv(self, file_path, headers, data):
         """주어진 데이터를 CSV 파일에 씁니다."""
         try:
@@ -248,6 +255,11 @@ class Database:
 
     def update_student(self, student_id, info):
         """학생 정보 업데이트"""
+        updated_name = info.get('이름')
+        if not updated_name:
+            print("학생 이름은 비워둘 수 없습니다.")
+            return False
+
         sql = '''
             UPDATE students SET
                 name = ?,
@@ -261,7 +273,7 @@ class Database:
             WHERE id = ?
         '''
         params = (
-            info.get('이름'),
+            updated_name,
             info.get('연락처', ''),
             info.get('성별', ''),
             info.get('생년월일', ''),
@@ -277,7 +289,8 @@ class Database:
                 cursor.execute(sql, params)
                 conn.commit()
                 return cursor.rowcount > 0
-        except sqlite3.IntegrityError: # 이름 중복
+        except sqlite3.IntegrityError:
+            print(f"학생 정보 업데이트 오류: 이름 '{updated_name}'이(가) 이미 존재합니다.")
             return False
         except sqlite3.Error as e:
             print(f"학생 정보 업데이트 오류: {e}")
@@ -297,6 +310,62 @@ class Database:
 
     def get_student(self, name):
         """학생 정보 조회 (id 포함)"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT id, name, phone, gender, birth_date, 
+                           guardian_phone1, guardian_phone2, memo
+                    FROM students WHERE name = ?
+                ''', (name,))
+                row = cursor.fetchone()
+
+            if row:
+                return {
+                    'id': row[0],
+                    '이름': row[1],
+                    '연락처': row[2],
+                    '성별': row[3],
+                    '생년월일': row[4],
+                    '보호자 연락처1': row[5],
+                    '보호자 연락처2': row[6],
+                    '메모': row[7]
+                }
+            return None
+        except sqlite3.Error as e:
+            print(f"학생 정보 조회 오류: {e}")
+            return None
+
+    def get_student_by_id(self, student_id):
+        """ID로 학생 정보 조회"""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT id, name, phone, gender, birth_date, 
+                           guardian_phone1, guardian_phone2, memo
+                    FROM students WHERE id = ?
+                ''', (student_id,))
+                row = cursor.fetchone()
+
+            if row:
+                return {
+                    'id': row[0],
+                    '이름': row[1],
+                    '연락처': row[2],
+                    '성별': row[3],
+                    '생년월일': row[4],
+                    '보호자 연락처1': row[5],
+                    '보호자 연락처2': row[6],
+                    '메모': row[7]
+                }
+            return None
+        except sqlite3.Error as e:
+            print(f"학생 정보 조회 오류: {e}")
+            return None
+
+    def get_student_by_name(self, name):
+        """이름으로 학생 정보 조회 (id 포함)"""
         try:
             with self.get_connection() as conn:
                 cursor = conn.cursor()

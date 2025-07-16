@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QFileDialog
 )
 import webbrowser
-from PySide6.QtCore import QDateTime, Qt, QSize, QThread
+from PySide6.QtCore import QDateTime, Qt, QSize, QThread, Signal
 
 from ui.dialogs import (
     ChangePasswordDialog, EditCounselDialog
@@ -16,11 +16,13 @@ from ui.dialogs import (
 from utils.config_manager import check_password, set_password, get_font_size, set_font_size
 from utils.updater import CURRENT_VERSION, UpdateChecker
 from utils.theme_manager import ThemeManager
+from utils.database_worker import DatabaseWorker
 
 
 class MainApp(QMainWindow):
+    update_student_data_signal = Signal(int, dict)
     #메인 애플리케이션 윈도우 클래스
-    def __init__(self, db, theme_manager: ThemeManager):
+    def __init__(self, theme_manager: ThemeManager):
         super().__init__()
         self.setWindowTitle('마음나래 Lite')
         self.setGeometry(100, 100, 900, 800)
@@ -28,8 +30,20 @@ class MainApp(QMainWindow):
 
         self.theme_manager = theme_manager
 
-        # 데이터베이스 설정
-        self.db = db
+        # 데이터베이스 설정 (워커 스레드로 이동)
+        self.db_thread = QThread()
+        self.db_worker = DatabaseWorker()
+        self.db_worker.moveToThread(self.db_thread)
+
+        # DatabaseWorker 시그널 연결
+        self.db_worker.students_ready.connect(self.handle_students_ready)
+        self.db_worker.student_info_ready.connect(self.handle_student_info_ready)
+        self.db_worker.student_data_for_update_ready.connect(self.handle_student_data_for_update)
+        self.db_worker.counsel_records_ready.connect(self.handle_counsel_records_ready)
+        self.db_worker.counsel_record_ready.connect(self.handle_counsel_record_ready)
+        self.db_worker.operation_success.connect(self.handle_db_operation_success)
+        self.db_worker.operation_error.connect(self.handle_db_operation_error)
+        self.update_student_data_signal.connect(self.db_worker.update_student)
         
         #탭 UI 구현
         self.tabs = QTabWidget()
@@ -57,6 +71,15 @@ class MainApp(QMainWindow):
         # 스레드 시작
         self.update_thread.start()
 
+    def closeEvent(self, event):
+        # 어플리케이션 종료 시 업데이트 스레드 정리
+        self.update_thread.quit()
+        self.update_thread.wait()
+        self.db_thread.quit()
+        self.db_thread.wait()
+        self.db_worker.close_connection()
+        super().closeEvent(event)
+
     def show_update_dialog(self, latest_version, update_content):
         # 업데이트 알림 대화상자 표시 함수
         message = f"새로운 버전({latest_version})이 있습니다.\n\n업데이트 내용:\n{update_content}\n\n업데이트 방법:\ndatabase.db와 settings.ini는 그대로 두고 실행파일만 교체해주세요.\n\n다운로드 페이지로 이동하시겠습니까?"
@@ -78,6 +101,124 @@ class MainApp(QMainWindow):
         self.update_thread.quit()
         self.update_thread.wait()
 
+    # --- DatabaseWorker 시그널 핸들러 ---
+    def handle_students_ready(self, students):
+        self.student_list.clear()
+        self.student_list.addItems(students)
+        self.name_combo.clear()
+        self.name_combo.addItems(students)
+        self.db_thread.quit() # 작업 완료 후 스레드 종료
+        self.db_thread.wait()
+
+    def handle_student_info_ready(self, info):
+        # 학생 정보 표시
+        if not info:
+            return
+        self.name_edit.setText(info.get('이름', ''))
+        if info.get('성별'):
+            self.gender_edit.setCurrentText(info['성별'])
+        if info.get('생년월일'):
+            birth_date_str = info.get('생년월일')
+            if birth_date_str:
+                self.birth_edit.setDateTime(QDateTime.fromString(birth_date_str, "yyyy-MM-dd"))
+        if info.get('연락처'):
+            self.phone_edit.setText(info['연락처'])
+        if info.get('보호자 연락처1'):
+            self.family_phone_edit1.setText(info['보호자 연락처1'])
+        if info.get('보호자 연락처2'):
+            self.family_phone_edit2.setText(info['보호자 연락처2'])
+        if info.get('메모'):
+            self.memo_edit.setText(info['메모'])
+
+    def handle_student_data_for_update(self, student_data):
+        if not student_data:
+            QMessageBox.critical(self, "오류", "학생 정보를 데이터베이스에서 찾을 수 없습니다.")
+            return
+        
+        student_id = student_data['id']
+        updated_name = self.name_edit.text().strip()
+
+        info = {
+            '이름': updated_name,
+            '성별': self.gender_edit.currentText(),
+            '생년월일': self.birth_edit.dateTime().toString("yyyy-MM-dd"),
+            '연락처': self.phone_edit.text(),
+            '보호자 연락처1': self.family_phone_edit1.text(),
+            '보호자 연락처2': self.family_phone_edit2.text(),
+            '메모': self.memo_edit.toPlainText()
+        }
+        self.update_student_data_signal.emit(student_id, info)
+        self.db_thread.start()
+
+    def handle_counsel_records_ready(self, records):
+        # 상담 기록 표시
+        self.counsel_record_list.clear()
+        if not records:
+            self.counsel_record_list.addItem('상담 기록이 없습니다.')
+            self.counsel_record_list.setEnabled(False)
+            return
+            
+        self.counsel_record_list.setEnabled(True)
+        for rec in records:
+            summary = f"[{rec['일시']}] ({rec['대상']}, {rec['방법']}, {rec['분류']}) \n {rec['내용']} \n"
+            item = QListWidgetItem(summary)
+            item.setData(Qt.UserRole, rec['id'])
+            self.counsel_record_list.addItem(item)
+        self.db_thread.quit() # 작업 완료 후 스레드 종료
+        self.db_thread.wait()
+
+    def handle_db_operation_success(self, operation_type, data):
+        if operation_type == "add_student":
+            self.student_list.addItem(data)
+            self.student_list.sortItems()
+            self.refresh_student_list()
+        elif operation_type == "delete_student":
+            row = self.student_list.currentRow()
+            self.student_list.takeItem(row)
+            self.counsel_record_list.clear()
+            self.name_edit.clear()
+            self.phone_edit.clear()
+            self.refresh_student_list()
+            QMessageBox.information(self, "삭제 완료", "학생 정보가 성공적으로 삭제되었습니다.")
+        elif operation_type == "update_student":
+            QMessageBox.information(self, "저장 완료", "학생 정보가 성공적으로 저장되었습니다.")
+            # UI의 학생 목록 업데이트
+            current_item = self.student_list.currentItem()
+            if current_item:
+                current_item.setText(data['이름'])
+            self.student_list.sortItems()
+            # After updating, re-display the current student's info to refresh the form
+            if current_item:
+                self.display_student_info_and_counsel(current_item.text())
+        elif operation_type == "add_counsel_record":
+            # 학생 정보 탭의 상담 기록 갱신
+            name = self.name_combo.currentText()
+            if self.student_list.currentItem() and self.student_list.currentItem().text() == name:
+                self.db_worker.get_student_info_and_counsel(name)
+                self.db_thread.start()
+            self.counsel_input.clear()
+            QMessageBox.information(self, "저장 완료", "상담 기록이 추가되었습니다.")
+        elif operation_type == "update_counsel_record":
+            QMessageBox.information(self, "성공", "상담기록이 수정되었습니다.")
+            student_name = self.student_list.currentItem().text() if self.student_list.currentItem() else None
+            if student_name:
+                self.db_worker.get_student_info_and_counsel(student_name)
+                self.db_thread.start()
+        elif operation_type == "delete_counsel_record":
+            student_name = self.student_list.currentItem().text() if self.student_list.currentItem() else None
+            if student_name:
+                self.db_worker.get_student_info_and_counsel(student_name)
+                self.db_thread.start()
+        elif operation_type == "export":
+            QMessageBox.information(self, "성공", data)
+        self.db_thread.quit() # 작업 완료 후 스레드 종료
+        self.db_thread.wait()
+
+    def handle_db_operation_error(self, error_message):
+        QMessageBox.critical(self, "오류", error_message)
+        self.db_thread.quit() # 작업 완료 후 스레드 종료
+        self.db_thread.wait()
+
     def init_student_tab(self):
         # 학생 정보탭 초기화 함수
 
@@ -91,8 +232,8 @@ class MainApp(QMainWindow):
         student_list_title.setProperty("class", "subtitle")
         left_layout.addWidget(student_list_title)
         self.student_list = QListWidget()
-        self.student_list.addItems(self.db.get_all_students())
         left_layout.addWidget(self.student_list)
+        
         
         btn_add = QPushButton('학생 추가')
         btn_del = QPushButton('학생 삭제')
@@ -124,7 +265,6 @@ class MainApp(QMainWindow):
         self.memo_edit.setPlaceholderText("학생에 관한 메모를 입력하세요.")
         btn_save_info = QPushButton("학생 정보 저장")
 
-        
         stu_title = QLabel("학생 정보")
         stu_title.setProperty("class", "subtitle")
         info_form.addRow(stu_title)
@@ -190,38 +330,9 @@ class MainApp(QMainWindow):
         if not student_name:
             return
             
-        # 학생 정보 표시
-        info = self.db.get_student(student_name)
-        if not info:
-            return
-            
-        self.name_edit.setText(student_name)
-        if info.get('성별'):
-            self.gender_edit.setCurrentText(info['성별'])
-        if info.get('생년월일'):
-            self.birth_edit.setDateTime(QDateTime.fromString(info['생년월일'], "yyyy-MM-dd"))
-        if info.get('연락처'):
-            self.phone_edit.setText(info['연락처'])
-        if info.get('보호자 연락처1'):
-            self.family_phone_edit1.setText(info['보호자 연락처1'])
-        if info.get('보호자 연락처2'):
-            self.family_phone_edit2.setText(info['보호자 연락처2'])
-        if info.get('메모'):
-            self.memo_edit.setText(info['메모'])
-
-        # 상담 기록 표시
-        records = self.db.get_counsel_records(student_name)
-        if not records:
-            self.counsel_record_list.addItem('상담 기록이 없습니다.')
-            self.counsel_record_list.setEnabled(False)
-            return
-            
-        self.counsel_record_list.setEnabled(True)
-        for rec in records:
-            summary = f"[{rec['일시']}] ({rec['대상']}, {rec['방법']}, {rec['분류']}) \n {rec['내용']} \n"
-            item = QListWidgetItem(summary)
-            item.setData(Qt.UserRole, rec['id'])
-            self.counsel_record_list.addItem(item)
+        # 학생 정보 및 상담 기록 조회 요청
+        self.db_worker.get_student_info_and_counsel(student_name)
+        self.db_thread.start()
 
     def save_student_info(self):
         # 학생 정보 저장 함수
@@ -232,12 +343,6 @@ class MainApp(QMainWindow):
             return
 
         original_name = current_item.text()
-        student_data = self.db.get_student(original_name)
-        if not student_data:
-            QMessageBox.critical(self, "오류", "학생 정보를 데이터베이스에서 찾을 수 없습니다.")
-            return
-        
-        student_id = student_data['id']
         updated_name = self.name_edit.text().strip()
 
         if not updated_name:
@@ -245,36 +350,9 @@ class MainApp(QMainWindow):
             self.name_edit.setText(original_name) # 원래 이름으로 복원
             return
 
-        # 이름이 변경되었고, 변경된 이름이 이미 다른 학생에게 사용 중인지 확인
-        if original_name != updated_name:
-            existing_students = self.db.get_all_students()
-            if updated_name in existing_students:
-                QMessageBox.warning(self, "중복 오류", f"'{updated_name}' 학생은 이미 존재합니다.")
-                self.name_edit.setText(original_name)  # 원래 이름으로 복원
-                return
-        
-        # 학생 정보 업데이트
-        info = {
-            'id': student_id,
-            '이름': updated_name,
-            '성별': self.gender_edit.currentText(),
-            '생년월일': self.birth_edit.dateTime().toString("yyyy-MM-dd"),
-            '연락처': self.phone_edit.text(),
-            '보호자 연락처1': self.family_phone_edit1.text(),
-            '보호자 연락처2': self.family_phone_edit2.text(),
-            '메모': self.memo_edit.toPlainText()
-        }
-
-        if self.db.update_student(student_id, info):
-            QMessageBox.information(self, "저장 완료", "학생 정보가 성공적으로 저장되었습니다.")
-            # UI의 학생 목록 업데이트
-            current_item.setText(updated_name)
-            self.student_list.sortItems()
-            self.refresh_student_list()
-        else:
-            QMessageBox.critical(self, "저장 실패", "학생 정보 저장에 실패했습니다. 이름이 중복되었거나 데이터베이스 오류일 수 있습니다.")
-            # 실패 시 UI를 원래대로 되돌릴 수 있도록 원래 이름으로 다시 설정
-            self.name_edit.setText(original_name)
+        # 선택된 학생 정보 불러오기
+        self.db_worker.get_student_by_name_for_update(original_name)
+        self.db_thread.start()
 
     def edit_counsel_record(self):
         # 상담 기록 수정 함수
@@ -290,7 +368,11 @@ class MainApp(QMainWindow):
             return
 
         record_id = current_item.data(Qt.UserRole)
-        record_to_edit = self.db.get_counsel_record(record_id)
+        self.db_worker.get_counsel_record(record_id)
+        self.db_thread.start()
+
+    def handle_counsel_record_ready(self, record_to_edit):
+        student_name = self.student_list.currentItem().text() if self.student_list.currentItem() else None
         if not record_to_edit:
             QMessageBox.critical(self, "오류", "상담기록을 불러오지 못했습니다.")
             return
@@ -301,12 +383,8 @@ class MainApp(QMainWindow):
             if not updated_data['내용']:
                 QMessageBox.warning(self, "입력 오류", "상담 내용을 입력하세요.")
                 return
-
-            if self.db.update_counsel_record(record_id, updated_data):
-                QMessageBox.information(self, "성공", "상담기록이 수정되었습니다.")
-                self.display_student_info_and_counsel(student_name)
-            else:
-                QMessageBox.critical(self, "오류", "상담기록 수정에 실패했습니다.")
+            self.db_worker.update_counsel_record(record_to_edit['id'], updated_data)
+            self.db_thread.start()
 
     def delete_counsel_record(self):
         # 상담 기록 삭제 함수
@@ -328,22 +406,16 @@ class MainApp(QMainWindow):
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No
         )
         if reply == QMessageBox.Yes:
-            if self.db.delete_counsel_record_by_id(record_id):
-                self.display_student_info_and_counsel(student_name)
+            self.db_worker.delete_counsel_record_by_id(record_id)
+            self.db_thread.start()
 
     def add_student(self):
         # 학생 추가 함수
 
         text, ok = QInputDialog.getText(self, '학생 추가', '학생 이름을 입력하세요:')
         if ok and text:
-            if text in self.db.get_all_students():
-                QMessageBox.warning(self, "중복", "이미 존재하는 학생입니다.")
-                return
-            
-            if self.db.add_student(text):
-                self.student_list.addItem(text)
-                self.student_list.sortItems()
-                self.refresh_student_list()
+            self.db_worker.add_student(text)
+            self.db_thread.start()
 
     def delete_student(self):
         # 학생 삭제 함수
@@ -359,13 +431,8 @@ class MainApp(QMainWindow):
             QMessageBox.Yes | QMessageBox.No, QMessageBox.No
         )
         if reply == QMessageBox.Yes:
-            if self.db.delete_student(name):
-                row = self.student_list.currentRow()
-                self.student_list.takeItem(row)
-                self.counsel_record_list.clear()
-                self.name_edit.clear()
-                self.phone_edit.clear()
-                self.refresh_student_list()
+            self.db_worker.delete_student(name)
+            self.db_thread.start()
 
     def init_counsel_tab(self):
         # 상담 기록 탭 초기화
@@ -381,7 +448,8 @@ class MainApp(QMainWindow):
         row1.addWidget(QLabel('학생 이름'))
         self.name_combo = QComboBox()
         self.name_combo.setMaximumWidth(200)
-        self.name_combo.addItems(self.db.get_all_students())
+        self.db_worker.get_all_students()
+        self.db_thread.start()
         row1.addWidget(self.name_combo)
         row1.addStretch()
 
@@ -440,9 +508,6 @@ class MainApp(QMainWindow):
         if not name:
             QMessageBox.warning(self, "선택 오류", "학생 이름을 입력하거나 선택하세요.")
             return
-        if name not in self.db.get_all_students():
-            QMessageBox.warning(self, "입력 오류", "학생 이름이 존재하지 않습니다. 정확한 이름을 입력하세요.")
-            return
             
         dt = self.datetime_edit.dateTime().toString("yyyy-MM-dd HH:mm")
         target = self.target_combo.currentText()
@@ -455,20 +520,16 @@ class MainApp(QMainWindow):
             return
             
         new_record = {'일시': dt, '대상': target, '방법': method, '분류': category, '내용': content}
-        if self.db.add_counsel_record(name, new_record):
-            # 학생 정보 탭의 상담 기록 갱신
-            if self.student_list.currentItem() and self.student_list.currentItem().text() == name:
-                self.display_student_info_and_counsel(name)
-            self.counsel_input.clear()
-            QMessageBox.information(self, "저장 완료", "상담 기록이 추가되었습니다.")
+        self.db_worker.add_counsel_record(name, new_record)
+        self.db_thread.start()
 
     def refresh_student_list(self):
         # 학생 목록 새로고침 함수
 
         # 학생 추가/삭제 후 상담 기록 탭의 콤보박스 갱신
         self.name_combo.clear()
-        student_names = [self.student_list.item(i).text() for i in range(self.student_list.count())]
-        self.name_combo.addItems(student_names)
+        self.db_worker.get_all_students()
+        self.db_thread.start()
 
     def change_password(self):
         # 암호 변경 함수
@@ -590,10 +651,8 @@ class MainApp(QMainWindow):
         )
         
         if file_path:
-            if self.db.export_to_csv(file_path):
-                QMessageBox.information(self, "성공", f"전체 데이터가 성공적으로 내보내졌습니다.\n저장 위치: {file_path}")
-            else:
-                QMessageBox.critical(self, "오류", "데이터 내보내기에 실패했습니다.")
+            self.db_worker.export_all_data(file_path)
+            self.db_thread.start()
 
     def export_students_data(self):
         # 학생 정보 CSV 내보내기
@@ -605,10 +664,8 @@ class MainApp(QMainWindow):
         )
         
         if file_path:
-            if self.db.export_students_to_csv(file_path):
-                QMessageBox.information(self, "성공", f"학생 정보가 성공적으로 내보내졌습니다.\n저장 위치: {file_path}")
-            else:
-                QMessageBox.critical(self, "오류", "학생 정보 내보내기에 실패했습니다.")
+            self.db_worker.export_students_data(file_path)
+            self.db_thread.start()
 
     def export_counseling_data(self):
         # 상담 기록 CSV 내보내기
@@ -620,10 +677,8 @@ class MainApp(QMainWindow):
         )
         
         if file_path:
-            if self.db.export_counseling_to_csv(file_path):
-                QMessageBox.information(self, "성공", f"상담 기록이 성공적으로 내보내졌습니다.\n저장 위치: {file_path}")
-            else:
-                QMessageBox.critical(self, "오류", "상담 기록 내보내기에 실패했습니다.")
+            self.db_worker.export_counseling_data(file_path)
+            self.db_thread.start()
 
     def export_counseling_data_for_neis(self):
         # 나이스 등록용 상담 기록 CSV 내보내기
@@ -635,7 +690,5 @@ class MainApp(QMainWindow):
         )
         
         if file_path:
-            if self.db.export_counseling_to_csv_for_neis(file_path):
-                QMessageBox.information(self, "성공", f"나이스 등록용 상담 파일이 성공적으로 내보내졌습니다.\n저장 위치: {file_path}\n\n파일을 [나이스]-[상담관리]-[상담현황]에서 자료 올리기 버튼으로 업로드 하세요.")
-            else:
-                QMessageBox.critical(self, "오류", "나이스 등록용 상담 파일 내보내기에 실패했습니다.")
+            self.db_worker.export_counseling_data_for_neis(file_path)
+            self.db_thread.start()
