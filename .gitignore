@@ -9,3 +9,4 @@ HeartWings_Lite_v1.2.4.spec
 main.spec
 /build
 /dist
+*.spec
