@@ -372,7 +372,6 @@ class MainApp(QMainWindow):
         self.db_thread.start()
 
     def handle_counsel_record_ready(self, record_to_edit):
-        student_name = self.student_list.currentItem().text() if self.student_list.currentItem() else None
         if not record_to_edit:
             QMessageBox.critical(self, "오류", "상담기록을 불러오지 못했습니다.")
             return
