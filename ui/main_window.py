@@ -160,7 +160,7 @@ class MainApp(QMainWindow):
             
         self.counsel_record_list.setEnabled(True)
         for rec in records:
-            summary = f"[{rec['일시']}] ({rec['대상']}, {rec['방법']}, {rec['분류']}) \n {rec['내용']} \n"
+            summary = f"[{rec['일시']}] ({rec['대상']}, {rec['방법']}, {rec['분류']})\n{rec['내용']}\n"
             item = QListWidgetItem(summary)
             item.setData(Qt.UserRole, rec['id'])
             self.counsel_record_list.addItem(item)
