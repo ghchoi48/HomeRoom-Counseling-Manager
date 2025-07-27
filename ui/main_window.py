@@ -1,5 +1,4 @@
 # 메인 윈도우 모듈
-import sys
 
 from PySide6.QtWidgets import (
     QMainWindow, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout,

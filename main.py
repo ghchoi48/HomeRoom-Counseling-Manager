@@ -6,8 +6,6 @@ HeartWings Lite
 import sys, os
 from PySide6.QtWidgets import QApplication, QMessageBox
 from PySide6.QtGui import QIcon
-
-from utils.database import Database
 from utils.config_manager import is_password_set, check_password, set_password, get_font_size
 from ui.dialogs import CreatePasswordDialog, PasswordDialog
 from ui.main_window import MainApp
