@@ -45,6 +45,12 @@ QLabel[class~="caption"] {
     font-size: 12px;
 }
 
+QLabel[class~="caution"] {
+    color: {{text_error}};
+    font-size: 12px;
+    font-weight: 500;
+}
+
 QLabel[class~="error"] {
     color: {{text_error}};
     font-weight: 500;
