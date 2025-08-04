@@ -87,7 +87,7 @@ def get_school_year():
         if config.has_option(SETTINGS_SECTION, SCHOOL_YEAR_OPTION):
             year_str = config.get(SETTINGS_SECTION, SCHOOL_YEAR_OPTION)
             return year_str.strip()
-    return datetime.date.today().year # 기본값
+    return set_school_year(datetime.date.today().year) # 기본값
 
 def set_school_year(year):
     # 학년도 설정을 설정 파일에 저장
