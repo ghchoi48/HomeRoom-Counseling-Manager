@@ -13,6 +13,11 @@ FONT_SIZE_OPTION = 'fontsize'
 SETTINGS_SECTION = 'settings'
 SCHOOL_YEAR_OPTION= 'school_year'
 
+CATEGORY = ['학업', '진로', '성격', '성', '대인관계', '가정 및 가족관계', '일탈 및 비행', '학교폭력 가해', '학교폭력 피해', '자해 및 자살', '정신건강', '컴퓨터 및 스마트폰 과사용', '정보제공', '기타']
+TARGET = ['학생', '학부모', '교사', '기타']
+METHOD = ['면담', '전화상담', '사이버상담']
+GENDER = ['남자', '여자', '기타']
+
 def _hash_password(password):
     # 암호를 비문화
     return hashlib.sha256(password.encode('utf-8')).hexdigest()

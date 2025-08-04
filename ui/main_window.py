@@ -12,7 +12,7 @@ from PySide6.QtCore import QDateTime, Qt, QSize, QThread, Signal
 from ui.dialogs import (
     ChangePasswordDialog, EditCounselDialog
 )
-from utils.config_manager import check_password, set_password, get_font_size, set_font_size, get_school_year, set_school_year
+from utils.config_manager import check_password, set_password, get_font_size, set_font_size, get_school_year, set_school_year, CATEGORY, TARGET, METHOD, GENDER
 from utils.updater import CURRENT_VERSION, UpdateChecker
 from utils.theme_manager import ThemeManager
 from utils.database_worker import DatabaseWorker
@@ -249,7 +249,7 @@ class MainApp(QMainWindow):
         info_form = QFormLayout(info_group)
         self.phone_edit = QLineEdit()
         self.gender_edit = QComboBox()
-        self.gender_edit.addItems(['남자', '여자', '기타'])
+        self.gender_edit.addItems(GENDER)
         self.gender_edit.setMinimumWidth(100)
         self.birth_edit = QDateTimeEdit()
         self.birth_edit.setDateTime(QDateTime.currentDateTime())
@@ -464,7 +464,7 @@ class MainApp(QMainWindow):
         # 상담 대상
         row3.addWidget(QLabel('상담 대상'))
         self.target_combo = QComboBox()
-        self.target_combo.addItems(['학생 본인', '보호자', '친구', '기타'])
+        self.target_combo.addItems(TARGET)
         self.target_combo.setMaximumWidth(200)
         row3.addWidget(self.target_combo)
         row3.addSpacing(20)
@@ -472,7 +472,7 @@ class MainApp(QMainWindow):
         row3.addWidget(QLabel('상담 방법'))
         self.method_combo = QComboBox()
         self.method_combo.setMaximumWidth(200)
-        self.method_combo.addItems(['면담', '전화상담', '사이버상담'])
+        self.method_combo.addItems(METHOD)
         row3.addWidget(self.method_combo)
         row3.addSpacing(20)
 
@@ -480,7 +480,7 @@ class MainApp(QMainWindow):
         row3.addWidget(QLabel('상담 분류'))
         self.category_combo = QComboBox()
         self.category_combo.setMaximumWidth(200)
-        self.category_combo.addItems(['학업', '진로', '성격', '성', '대인관계', '가정 및 가족관계', '일탈 및 비행', '학교폭력 가해', '학교폭력 피해', '자해 및 자살', '정신건강', '컴퓨터 및 스마트폰 과사용', '정보제공', '기타'])
+        self.category_combo.addItems(CATEGORY)
         row3.addWidget(self.category_combo)
         row3.addStretch()
 
@@ -634,14 +634,20 @@ class MainApp(QMainWindow):
         school_year_layout.addWidget(school_year_label)
         school_year_layout.addWidget(self.school_year_combo)
         school_year_layout.addStretch()
+
+        # 다크모드 토글
+        toggle_dark_mode = QPushButton("다크 모드 전환")
+        toggle_dark_mode.pressed.connect(self.theme_manager.toggle_theme)
         
         right_layout.addWidget(settings_label)
         right_layout.addLayout(font_layout)
         right_layout.addWidget(font_size_caption)
-        right_layout.addSpacing(30)
+        right_layout.addSpacing(20)
         right_layout.addLayout(school_year_layout)
         right_layout.addWidget(school_year_caption)
-        right_layout.addSpacing(30)
+        right_layout.addSpacing(20)
+        right_layout.addWidget(toggle_dark_mode)
+        right_layout.addSpacing(20)
         right_layout.addWidget(change_password_btn)
         right_layout.addWidget(change_password_caption)
         right_layout.addSpacing(30)

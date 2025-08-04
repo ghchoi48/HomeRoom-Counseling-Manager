@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (
     QLineEdit, QComboBox, QDateTimeEdit, QTextEdit, QMessageBox
 )
 from PySide6.QtCore import QDateTime
+from utils.config_manager import TARGET, METHOD, CATEGORY
 
 
 class PasswordDialogBase(QDialog):
@@ -111,17 +112,17 @@ class EditCounselDialog(QDialog):
 
         self.target_combo = QComboBox()
         self.target_combo.setMinimumWidth(200)
-        self.target_combo.addItems(['학생 본인', '보호자', '친구', '기타'])
+        self.target_combo.addItems(TARGET)
         self.target_combo.setCurrentText(record['대상'])
 
         self.method_combo = QComboBox()
         self.method_combo.setMinimumWidth(200)
-        self.method_combo.addItems(['면담', '전화상담', '사이버상담'])
+        self.method_combo.addItems(METHOD)
         self.method_combo.setCurrentText(record['방법'])
 
         self.category_combo = QComboBox()
         self.category_combo.setMinimumWidth(200)
-        self.category_combo.addItems(['학업', '진로', '성격', '성', '대인관계', '가정 및 가족관계', '일탈 및 비행', '학교폭력 가해', '학교폭력 피해', '자해 및 자살', '정신건강', '컴퓨터 및 스마트폰 과사용', '정보제공', '기타'])
+        self.category_combo.addItems(CATEGORY)
         self.category_combo.setCurrentText(record['분류'])
 
         self.counsel_input = QTextEdit()
