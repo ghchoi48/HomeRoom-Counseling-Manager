@@ -1,5 +1,5 @@
 # 메인 윈도우 모듈
-
+import datetime
 from PySide6.QtWidgets import (
     QMainWindow, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout,
     QListWidget, QTextEdit, QPushButton, QInputDialog, QMessageBox, QLabel,
@@ -12,7 +12,7 @@ from PySide6.QtCore import QDateTime, Qt, QSize, QThread, Signal
 from ui.dialogs import (
     ChangePasswordDialog, EditCounselDialog
 )
-from utils.config_manager import check_password, set_password, get_font_size, set_font_size
+from utils.config_manager import check_password, set_password, get_font_size, set_font_size, get_school_year, set_school_year
 from utils.updater import CURRENT_VERSION, UpdateChecker
 from utils.theme_manager import ThemeManager
 from utils.database_worker import DatabaseWorker
@@ -619,18 +619,36 @@ class MainApp(QMainWindow):
         change_password_btn.clicked.connect(self.change_password)
         change_password_caption = QLabel("암호를 잊었을 경우에는 settings.ini 파일을 삭제하세요.\n자료 보존을 위해 counseling.db 파일은 주기적으로 백업하세요.")
         change_password_caption.setProperty("class", "caption")
+
+        # 학년도 설정 UI
+        school_year_label = QLabel("학년도 설정:")
+        self.school_year_combo = QComboBox()
+        self.school_year_combo.addItems([str(i) for i in range(datetime.date.today().year - 2, datetime.date.today().year + 3)])
+        current_school_year = get_school_year()
+        self.school_year_combo.setCurrentText(current_school_year)
+        self.school_year_combo.currentTextChanged.connect(self.change_school_year)
+        school_year_caption = QLabel("학년도는 2년 전부터 2년 후 까지 설정할 수 있습니다.\n나이스 CSV 내보내기 시 설정된 학년도에 맞춰서 내보내집니다.")
+        school_year_caption.setProperty("class", "caption")
+
+        school_year_layout = QHBoxLayout()
+        school_year_layout.addWidget(school_year_label)
+        school_year_layout.addWidget(self.school_year_combo)
+        school_year_layout.addStretch()
         
-        right_layout.addWidget(data_export_title)
-        right_layout.addWidget(data_export_caption)
-        right_layout.addLayout(export_btn_row1)
-        right_layout.addLayout(export_btn_row2)
-        right_layout.addSpacing(30)
         right_layout.addWidget(settings_label)
         right_layout.addLayout(font_layout)
         right_layout.addWidget(font_size_caption)
         right_layout.addSpacing(30)
+        right_layout.addLayout(school_year_layout)
+        right_layout.addWidget(school_year_caption)
+        right_layout.addSpacing(30)
         right_layout.addWidget(change_password_btn)
         right_layout.addWidget(change_password_caption)
+        right_layout.addSpacing(30)
+        right_layout.addWidget(data_export_title)
+        right_layout.addWidget(data_export_caption)
+        right_layout.addLayout(export_btn_row1)
+        right_layout.addLayout(export_btn_row2)
         right_layout.addStretch()  # 남은 공간을 채움
         layout.addLayout(right_layout, 1)
 
@@ -638,6 +656,10 @@ class MainApp(QMainWindow):
         size = int(size_str)
         set_font_size(size)
         self.theme_manager.set_font_size(size)
+
+    def change_school_year(self, year_str):
+        year = int(year_str)
+        set_school_year(year)
 
     def export_all_data(self):
         # 전체 데이터 CSV 내보내기
@@ -686,7 +708,7 @@ class MainApp(QMainWindow):
             "나이스_등록용_상담일지_상담기록.csv", 
             "CSV 파일 (*.csv)"
         )
-        
+
         if file_path:
-            self.db_worker.export_counseling_data_for_neis(file_path)
+            self.db_worker.export_counseling_data_for_neis(file_path, get_school_year())
             self.db_thread.start()

@@ -1,6 +1,7 @@
 import configparser
 import hashlib
 import os
+import datetime
 from .helpers import get_base_dir
 
 BASE_DIR = get_base_dir()
@@ -9,6 +10,9 @@ PASSWORD_SECTION = 'security'
 PASSWORD_OPTION = 'password'
 DISPLAY_SECTION = 'display'
 FONT_SIZE_OPTION = 'fontsize'
+SETTINGS_SECTION = 'settings'
+SCHOOL_YEAR_OPTION= 'school_year'
+
 
 
 def _hash_password(password):
@@ -71,6 +75,30 @@ def set_font_size(size):
         config.add_section(DISPLAY_SECTION)
         
     config.set(DISPLAY_SECTION, FONT_SIZE_OPTION, str(size))
+    
+    with open(CONFIG_FILE, 'w', encoding='utf-8') as configfile:
+        config.write(configfile) 
+
+def get_school_year():
+    # 설정 파일에서 학년도 설정을 가져옴
+    config = configparser.ConfigParser()
+    if os.path.exists(CONFIG_FILE):
+        config.read(CONFIG_FILE, encoding='utf-8')
+        if config.has_option(SETTINGS_SECTION, SCHOOL_YEAR_OPTION):
+            year_str = config.get(SETTINGS_SECTION, SCHOOL_YEAR_OPTION)
+            return year_str.strip()
+    return datetime.date.today().year # 기본값
+
+def set_school_year(year):
+    # 학년도 설정을 설정 파일에 저장
+    config = configparser.ConfigParser()
+    if os.path.exists(CONFIG_FILE):
+        config.read(CONFIG_FILE, encoding='utf-8')
+
+    if not config.has_section(SETTINGS_SECTION):
+        config.add_section(SETTINGS_SECTION)
+        
+    config.set(SETTINGS_SECTION, SCHOOL_YEAR_OPTION, str(year))
     
     with open(CONFIG_FILE, 'w', encoding='utf-8') as configfile:
         config.write(configfile) 

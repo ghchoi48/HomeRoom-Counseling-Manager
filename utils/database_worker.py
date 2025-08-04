@@ -167,8 +167,8 @@ class DatabaseWorker(QObject):
             self.operation_error.emit("상담 기록 내보내기에 실패했습니다.")
 
     @Slot(str)
-    def export_counseling_data_for_neis(self, file_path):
-        if self.db.export_counseling_to_csv_for_neis(file_path):
+    def export_counseling_data_for_neis(self, file_path, school_year):
+        if self.db.export_counseling_to_csv_for_neis(file_path, school_year):
             self.operation_success.emit("export", f"나이스 등록용 상담 파일이 성공적으로 내보내졌습니다.\n저장 위치: {file_path}")
         else:
             self.operation_error.emit("나이스 등록용 상담 파일 내보내기에 실패했습니다.")

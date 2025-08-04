@@ -52,7 +52,7 @@ class Database:
             print(f"CSV 파일 쓰기 오류: {e}")
             return False
         
-    def export_counseling_to_csv_for_neis(self, file_path):
+    def export_counseling_to_csv_for_neis(self, file_path, school_year):
         """나이스 등록용 CSV 파일을 내보냅니다."""
         try:
             with self.get_connection() as conn:
@@ -67,7 +67,7 @@ class Database:
                 # *상담구분, *상담일자, *상담제목, *상담매체구분
 
                 front_value = ('일반상담', '일반', '상담', '개인상담')
-                middle_value1 = ('1', '2025')
+                middle_value1 = ('1', school_year)
                 new_records = [ front_value + record[:1] + middle_value1 + record[1:] for record in records] 
                 # *상담분류, *Wee클래스, *대분류, *중분류, *상담구분, *상담인원, *학년도, *상담일자, *상담제목, *상담매체구분
 
