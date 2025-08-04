@@ -13,8 +13,6 @@ FONT_SIZE_OPTION = 'fontsize'
 SETTINGS_SECTION = 'settings'
 SCHOOL_YEAR_OPTION= 'school_year'
 
-
-
 def _hash_password(password):
     # 암호를 비문화
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
