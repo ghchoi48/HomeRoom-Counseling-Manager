@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
     QMainWindow, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout,
     QListWidget, QTextEdit, QPushButton, QInputDialog, QMessageBox, QLabel,
     QComboBox, QDateTimeEdit, QLineEdit, QFormLayout, QListWidgetItem,
-    QFileDialog
+    QFileDialog, QPlainTextEdit
 )
 import webbrowser
 from PySide6.QtCore import QDateTime, Qt, QSize, QThread, Signal
@@ -16,6 +16,7 @@ from utils.config_manager import check_password, set_password, get_font_size, se
 from utils.updater import CURRENT_VERSION, UpdateChecker
 from utils.theme_manager import ThemeManager
 from utils.database_worker import DatabaseWorker
+from utils.license import LICENSE
 
 
 class MainApp(QMainWindow):
@@ -558,13 +559,24 @@ class MainApp(QMainWindow):
         program_discription = QLabel('학교에 근무하는 선생님들을 위한 상담 관리 프로그램')
         program_discription.setProperty("class", "caption")
         left_layout.addWidget(program_discription)
+        left_layout.addSpacing(20)
+        program_info_title = QLabel('프로그램 정보')
+        program_info_title.setProperty("class", "subtitle")
+        left_layout.addWidget(program_info_title)
         left_layout.addWidget(QLabel(f'현재 버전: {CURRENT_VERSION}'))
         left_layout.addWidget(QLabel('만든이: 경상북도교육청 전문상담교사 최규호'))
-        left_layout.addWidget(QLabel('라이센스: MIT Lisence'))
         github_label = QLabel('소스코드: <a href="https://github.com/ghchoi48/HomeRoom-Counseling-Manager">https://github.com/ghchoi48/HomeRoom-Counseling-Manager</a>')
         github_label.setOpenExternalLinks(True)
         github_label.setWordWrap(True)
         left_layout.addWidget(github_label)
+        left_layout.addSpacing(20)
+        license_label = QLabel('라이센스')
+        license_label.setProperty("class", "subtitle")
+        license_text = QPlainTextEdit()
+        license_text.setReadOnly(True)
+        license_text.setPlainText(LICENSE)
+        left_layout.addWidget(license_label)
+        left_layout.addWidget(license_text)
         
         left_layout.addStretch() # 남은 공간을 채움
         layout.addLayout(left_layout, 1)
