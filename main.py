@@ -6,7 +6,7 @@ HeartWings Lite
 import sys, os
 from PySide6.QtWidgets import QApplication, QMessageBox
 from PySide6.QtGui import QIcon
-from utils.config_manager import is_password_set, check_password, set_password, get_font_size, get_school_year
+from utils.config_manager import is_password_set, check_password, set_password, get_font_size
 from ui.dialogs import CreatePasswordDialog, PasswordDialog
 from ui.main_window import MainApp
 
@@ -34,9 +34,6 @@ def main():
     font_size = get_font_size()
     theme_manager = ThemeManager(font_size=f"{font_size}px")
     theme_manager.apply_theme()
-
-    # 학년도 초기화
-    get_school_year()
 
     # 암호 설정 확인 및 처리
     if not is_password_set():

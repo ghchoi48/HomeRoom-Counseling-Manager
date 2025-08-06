@@ -1,6 +1,7 @@
 import sqlite3
 import os
 import csv
+from datetime import datetime
 from contextlib import contextmanager
 from utils.helpers import get_base_dir
 
@@ -52,34 +53,35 @@ class Database:
             print(f"CSV 파일 쓰기 오류: {e}")
             return False
         
-    def export_counseling_to_csv_for_neis(self, file_path, school_year):
+    def export_counseling_to_csv_for_neis(self, file_path):
         """나이스 등록용 CSV 파일을 내보냅니다."""
         try:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute('''
-                    SELECT cr.category, REPLACE(date(cr.counsel_date), '-', ''), cr.category, cr.method
+                    SELECT cr.category, cr.counsel_date, cr.method
                     FROM counseling_records cr
                     JOIN students s ON cr.student_id = s.id
                     ORDER BY cr.counsel_date
                 ''')
                 records = cursor.fetchall()
-                # *상담구분, *상담일자, *상담제목, *상담매체구분
+                
+                result_rows = []
+                for record in records:
+                    category, counsel_date, method = record
 
-                front_value = ('일반상담', '일반', '상담', '개인상담')
-                middle_value1 = ('1', school_year)
-                new_records = [ front_value + record[:1] + middle_value1 + record[1:] for record in records] 
-                # *상담분류, *Wee클래스, *대분류, *중분류, *상담구분, *상담인원, *학년도, *상담일자, *상담제목, *상담매체구분
+                    #학년도 계산
+                    date_only = counsel_date.split()[0]
+                    date_obj = datetime.strptime(date_only, "%Y-%m-%d")
+                    school_year = date_obj.year if date_obj.month >= 3 else date_obj.year - 1
+                    formatted_date = date_obj.strftime("%Y%m%d")
 
-                middle_value2 = ('','')
-                new_new_records = [ record[:8] + middle_value2 + record[8:] for record in new_records]
-                # *상담분류, *Wee클래스, *대분류, *중분류, *상담구분, *상담인원, *학년도, *상담일자, 학년, 성별, *상담제목, *상담매체구분
-
-                middle_value3 = ('일반 상담은 상담 내용을 입력하지 않습니다.', '0', '10', '교사')
-                new_new_new_records = [ record[:11] + middle_value3 + record[11:] for record in new_new_records]
+                    # 필요한 필드 구성
+                    row = ('일반상담', '일반', '상담', '개인상담', category, '1', str(school_year), formatted_date, '', '', category, '일반 상담은 상담 내용을 입력하지 않습니다.', '0', '10', '교사', method,)
+                    result_rows.append(row)
 
             headers = ['*상담분류', '*Wee클래스', '*대분류', '*중분류', '*상담구분', '*상담인원','*학년도','*상담일자','학년','성별','*상담제목','*상담내용','*상담시간(시)','*상담시간(분)','*상담사소속','*상담매체구분']
-            return self._write_csv(file_path, headers, new_new_new_records)
+            return self._write_csv(file_path, headers, result_rows)
         except sqlite3.Error as e:
             print(f"나이스 등록용 CSV 내보내기 오류: {e}")
             return False

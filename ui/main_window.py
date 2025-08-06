@@ -1,5 +1,4 @@
 # 메인 윈도우 모듈
-import datetime
 from PySide6.QtWidgets import (
     QMainWindow, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout,
     QListWidget, QTextEdit, QPushButton, QInputDialog, QMessageBox, QLabel,
@@ -12,7 +11,7 @@ from PySide6.QtCore import QDateTime, Qt, QSize, QThread, Signal
 from ui.dialogs import (
     ChangePasswordDialog, EditCounselDialog
 )
-from utils.config_manager import check_password, set_password, get_font_size, set_font_size, get_school_year, set_school_year, CATEGORY, TARGET, METHOD, GENDER
+from utils.config_manager import check_password, set_password, get_font_size, set_font_size, CATEGORY, TARGET, METHOD, GENDER
 from utils.updater import CURRENT_VERSION, UpdateChecker
 from utils.theme_manager import ThemeManager
 from utils.database_worker import DatabaseWorker
@@ -639,28 +638,6 @@ class MainApp(QMainWindow):
         change_password_hint.setSpacing(0)
         change_password_hint.setContentsMargins(0, 0, 0, 0)
 
-        # 학년도 설정 UI
-        school_year_label = QLabel("학년도 설정:")
-        self.school_year_combo = QComboBox()
-        self.school_year_combo.addItems([str(i) for i in range(datetime.date.today().year - 2, datetime.date.today().year + 3)])
-        current_school_year = get_school_year()
-        self.school_year_combo.setCurrentText(current_school_year)
-        self.school_year_combo.currentTextChanged.connect(self.change_school_year)
-        school_year_caption = QLabel("학년도는 2년 전부터 2년 후 까지 설정할 수 있습니다.")
-        school_year_caution = QLabel("나이스 CSV 내보내기 시 설정된 학년도에 맞춰서 내보내집니다.")
-        school_year_caption.setProperty("class", "caption")
-        school_year_caution.setProperty("class", "caution")
-        school_year_hint = QVBoxLayout()
-        school_year_hint.addWidget(school_year_caption)
-        school_year_hint.addWidget(school_year_caution)
-        school_year_hint.setSpacing(0)
-        school_year_hint.setContentsMargins(0, 0, 0, 0)
-
-        school_year_layout = QHBoxLayout()
-        school_year_layout.addWidget(school_year_label)
-        school_year_layout.addWidget(self.school_year_combo)
-        school_year_layout.addStretch()
-
         # 다크모드 토글
         toggle_dark_mode = QPushButton("다크 모드 전환")
         toggle_dark_mode.pressed.connect(self.theme_manager.toggle_theme)
@@ -668,9 +645,6 @@ class MainApp(QMainWindow):
         right_layout.addWidget(settings_label)
         right_layout.addLayout(font_layout)
         right_layout.addWidget(font_size_caption)
-        right_layout.addSpacing(20)
-        right_layout.addLayout(school_year_layout)
-        right_layout.addLayout(school_year_hint)
         right_layout.addSpacing(20)
         right_layout.addWidget(change_password_btn)
         right_layout.addLayout(change_password_hint)
@@ -688,10 +662,6 @@ class MainApp(QMainWindow):
         size = int(size_str)
         set_font_size(size)
         self.theme_manager.set_font_size(size)
-
-    def change_school_year(self, year_str):
-        year = int(year_str)
-        set_school_year(year)
 
     def export_all_data(self):
         # 전체 데이터 CSV 내보내기
@@ -742,5 +712,5 @@ class MainApp(QMainWindow):
         )
 
         if file_path:
-            self.db_worker.export_counseling_data_for_neis(file_path, get_school_year())
+            self.db_worker.export_counseling_data_for_neis(file_path)
             self.db_thread.start()
