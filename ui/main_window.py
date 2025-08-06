@@ -3,7 +3,7 @@ from PySide6.QtWidgets import (
     QMainWindow, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout,
     QListWidget, QTextEdit, QPushButton, QInputDialog, QMessageBox, QLabel,
     QComboBox, QDateTimeEdit, QLineEdit, QFormLayout, QListWidgetItem,
-    QFileDialog, QPlainTextEdit
+    QFileDialog, QPlainTextEdit, QDateEdit
 )
 import webbrowser
 from PySide6.QtCore import QDateTime, Qt, QSize, QThread, Signal
@@ -590,23 +590,35 @@ class MainApp(QMainWindow):
         export_btn_row1 = QHBoxLayout()
         export_btn_row2 = QHBoxLayout()
         
-        btn_export_all = QPushButton("전체 데이터 내보내기")
+        btn_export_all = QPushButton("전체 데이터")
         btn_export_all.clicked.connect(self.export_all_data)
         export_btn_row1.addWidget(btn_export_all)
         
-        btn_export_students = QPushButton("학생 정보만 내보내기")
+        btn_export_students = QPushButton("학생 정보")
         btn_export_students.clicked.connect(self.export_students_data)
         export_btn_row1.addWidget(btn_export_students)
         
-        btn_export_counseling = QPushButton("상담 기록만 내보내기")
+        btn_export_counseling = QPushButton("상담 기록")
         btn_export_counseling.clicked.connect(self.export_counseling_data)
-        export_btn_row2.addWidget(btn_export_counseling)
+        export_btn_row1.addWidget(btn_export_counseling)
 
-        btn_export_counseling_for_neis = QPushButton("나이스 등록용 내보내기")
+        self.start_date_edit = QDateEdit()
+        self.start_date_edit.setCalendarPopup(True)
+        self.start_date_edit.setDateTime(QDateTime.currentDateTime())
+        self.end_date_edit = QDateEdit()
+        self.end_date_edit.setDateTime(QDateTime.currentDateTime())
+        self.end_date_edit.setCalendarPopup(True)
+        
+        btn_export_counseling_for_neis = QPushButton("나이스 등록용")
         btn_export_counseling_for_neis.setProperty("class", "success")
         btn_export_counseling_for_neis.clicked.connect(self.export_counseling_data_for_neis)
+        
+        export_btn_row2.addWidget(self.start_date_edit)
+        export_btn_row2.addWidget(QLabel(" ~ "))
+        export_btn_row2.addWidget(self.end_date_edit)
         export_btn_row2.addWidget(btn_export_counseling_for_neis)
-
+        export_btn_row2.addStretch()
+        
         # 글꼴 크기 설정
         settings_label = QLabel("설정")
         settings_label.setProperty("class", "subtitle")
@@ -710,7 +722,9 @@ class MainApp(QMainWindow):
             "나이스_등록용_상담일지_상담기록.csv", 
             "CSV 파일 (*.csv)"
         )
+        start_date = self.start_date_edit.dateTime().toString("yyyy-MM-dd")
+        end_date = self.end_date_edit.dateTime().toString("yyyy-MM-dd")
 
         if file_path:
-            self.db_worker.export_counseling_data_for_neis(file_path)
+            self.db_worker.export_counseling_data_for_neis(file_path, start_date, end_date)
             self.db_thread.start()

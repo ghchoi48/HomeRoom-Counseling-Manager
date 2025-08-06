@@ -53,7 +53,7 @@ class Database:
             print(f"CSV 파일 쓰기 오류: {e}")
             return False
         
-    def export_counseling_to_csv_for_neis(self, file_path):
+    def export_counseling_to_csv_for_neis(self, file_path, start_date, end_date):
         """나이스 등록용 CSV 파일을 내보냅니다."""
         try:
             with self.get_connection() as conn:
@@ -62,8 +62,9 @@ class Database:
                     SELECT cr.category, cr.counsel_date, cr.method
                     FROM counseling_records cr
                     JOIN students s ON cr.student_id = s.id
+                    WHERE cr.counsel_date BETWEEN ? AND ?
                     ORDER BY cr.counsel_date
-                ''')
+                ''', (start_date, end_date))
                 records = cursor.fetchall()
                 
                 result_rows = []

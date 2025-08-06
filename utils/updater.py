@@ -2,7 +2,7 @@ import requests
 from PySide6.QtCore import QObject, Signal
 
 # 현재 애플리케이션 버전
-CURRENT_VERSION = "1.3.1"  # 실제 버전에 맞게 수정
+CURRENT_VERSION = "1.3.5"  # 실제 버전에 맞게 수정
 
 class UpdateChecker(QObject):
     # 백그라운드에서 업데이트를 확인하고 완료되면 시그널을 발생시키는 클래스
