@@ -1,7 +1,7 @@
 # HeartWings Lite(마음나래 Lite)
 
-학교에 근무하는 선생님들을 위한 상담 관리 프로그램
-학생에 대한 간단한 정보를 등록하여 상담 기록을 관리할 수 있습니다.
+-   학교에 근무하는 선생님들을 위한 상담 관리 프로그램
+-   학생에 대한 간단한 정보를 등록하여 상담 기록을 관리할 수 있습니다.
 
 ## 주요 기능
 
@@ -57,4 +57,4 @@ python main.py
 
 ## 문의
 
-프로그램 관련 문의 및 기능 개선 의견은 2023angot_10@sc.gyo6.net로 보내주시거나 [Issues](https://github.com/your-repo/issues)로 남겨주세요.
+프로그램 관련 문의 및 기능 개선 의견은 2023angot_10@sc.gyo6.net로 보내주시거나 [Issues](https://github.com/ghchoi48/HomeRoom-Counseling-Manager/issues)로 남겨주세요.
