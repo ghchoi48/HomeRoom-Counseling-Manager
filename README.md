@@ -48,7 +48,7 @@ python main.py
 
 ## 스크린샷
 
-<img width="902" height="732" alt="스크린샷 2025-07-11 143348" src="https://github.com/user-attachments/assets/f7a24cd3-4b87-4fc7-bb34-80292b4f035c" />
+<img width="902" height="832" alt="image" src="https://github.com/user-attachments/assets/86baeffc-5d42-4ee3-be9e-0b33bcd74351" />
 
 ## Trouble Shooting
 
