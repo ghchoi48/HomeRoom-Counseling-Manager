@@ -23,7 +23,6 @@ def _hash_password(password):
 
 def is_password_set():
     # settings.ini에 암호가 있는지 확인
-
     if not os.path.exists(CONFIG_FILE):
         return False
     config = configparser.ConfigParser()
@@ -32,7 +31,6 @@ def is_password_set():
 
 def check_password(password):
     # 입력된 암호와 해시가 일치하는지 확인
-
     if not is_password_set():
         return False
     config = configparser.ConfigParser()
@@ -42,7 +40,6 @@ def check_password(password):
 
 def set_password(password):
     # 새 암호를 비문화하여 저장
-    
     config = configparser.ConfigParser()
     if os.path.exists(CONFIG_FILE):
         config.read(CONFIG_FILE, encoding='utf-8')

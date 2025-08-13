@@ -50,7 +50,6 @@ def main():
         if dialog.exec():
             password = dialog.get_password()
             if check_password(password):
-                # 데이터베이스 연결 확인은 이제 DatabaseWorker 내부에서 처리
                 break
             else:
                 QMessageBox.warning(None, '오류', '암호가 올바르지 않습니다.')

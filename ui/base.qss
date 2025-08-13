@@ -241,6 +241,21 @@ QDateTimeEdit::down-arrow, QDateEdit::down-arrow, QTimeEdit::down-arrow {
     height: 10px;
 }
 
+/* --- QCalendarWidget Year/Month Selector --- */
+QCalendarWidget QToolButton {
+    background-color: {{bg_element_white}}; /* 원하는 색상으로 변경 */
+    color: {{text_primary}};
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-weight: 500;
+}
+QCalendarWidget QToolButton:hover {
+    background-color: {{bg_tab_hover}};
+}
+QCalendarWidget QToolButton:pressed {
+    background-color: {{bg_tab_selected}};
+}
+
 /* --- QCheckBox & QRadioButton --- */
 QCheckBox, QRadioButton { spacing: 8px; color: {{text_primary}}; }
 QCheckBox::indicator, QRadioButton::indicator { width: 16px; height: 16px; }
