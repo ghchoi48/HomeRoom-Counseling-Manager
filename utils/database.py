@@ -36,7 +36,7 @@ class Database:
 
     def close_connection(self):
         """데이터베이스 연결을 닫습니다."""
-        pass
+        pass  # SQLite는 연결을 자동으로 닫으므로 별도의 작업이 필요하지 않습니다.
 
     def _write_csv(self, file_path, headers, data):
         """주어진 데이터를 CSV 파일에 씁니다."""

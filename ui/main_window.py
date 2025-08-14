@@ -212,7 +212,7 @@ class MainApp(QMainWindow):
         elif operation_type == "export":
             QMessageBox.information(self, "성공", data)
         elif operation_type == "import":
-            QMessageBox.information(self, "성공", f"학생 정보가 추가되었습니다.")
+            QMessageBox.information(self, "성공", data)
             self.refresh_student_list()
         self.db_thread.quit() # 작업 완료 후 스레드 종료
         self.db_thread.wait()
