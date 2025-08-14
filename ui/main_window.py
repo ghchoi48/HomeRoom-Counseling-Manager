@@ -3,7 +3,7 @@ from PySide6.QtWidgets import (
     QMainWindow, QTabWidget, QWidget, QVBoxLayout, QHBoxLayout,
     QListWidget, QTextEdit, QPushButton, QInputDialog, QMessageBox, QLabel,
     QComboBox, QDateTimeEdit, QLineEdit, QFormLayout, QListWidgetItem,
-    QFileDialog, QPlainTextEdit, QDateEdit
+    QFileDialog, QPlainTextEdit, QDateEdit, QGroupBox
 )
 import webbrowser
 from PySide6.QtCore import QDateTime, Qt, QSize, QThread, Signal
@@ -631,14 +631,13 @@ class MainApp(QMainWindow):
         import_students_btn = QPushButton("학생 정보 가져오기")
         import_students_btn.clicked.connect(self.import_students_data)
         export_form_students_btn = QPushButton("학생 정보 일괄 등록 양식")
+        export_form_students_btn.setProperty("class", "secondary")
         export_form_students_btn.clicked.connect(self.export_form_students_csv)
 
         import_btn_row1.addWidget(export_form_students_btn)
         import_btn_row1.addWidget(import_students_btn)
 
         # 글꼴 크기 설정
-        settings_label = QLabel("설정")
-        settings_label.setProperty("class", "subtitle")
         
         font_size_label = QLabel("글꼴 크기:")
         self.font_size_combo = QComboBox()
@@ -655,6 +654,8 @@ class MainApp(QMainWindow):
         font_layout.addStretch()
 
         # 암호 변경 버튼
+        change_password_title = QLabel("암호 변경")
+        change_password_title.setProperty("class", "subtitle")
         change_password_btn = QPushButton("암호 변경")
         change_password_btn.clicked.connect(self.change_password)
         change_password_caption = QLabel("자료 보존을 위해 counseling.db 파일은 주기적으로 백업하세요.")
@@ -670,25 +671,42 @@ class MainApp(QMainWindow):
         # 다크모드 토글
         toggle_dark_mode = QPushButton("다크 모드 전환")
         toggle_dark_mode.pressed.connect(self.theme_manager.toggle_theme)
-        
-        right_layout.addWidget(settings_label)
-        right_layout.addLayout(font_layout)
-        right_layout.addWidget(font_size_caption)
-        right_layout.addSpacing(20)
-        right_layout.addWidget(change_password_btn)
-        right_layout.addLayout(change_password_hint)
-        right_layout.addSpacing(20)
-        right_layout.addWidget(toggle_dark_mode)
-        right_layout.addSpacing(30)
-        right_layout.addWidget(data_export_title)
-        right_layout.addWidget(data_export_caption)
-        right_layout.addLayout(export_btn_row1)
-        right_layout.addLayout(export_btn_row2)
-        right_layout.addSpacing(20)
-        right_layout.addWidget(import_title)
-        right_layout.addWidget(import_caption)
-        right_layout.addLayout(import_btn_row1)
-        right_layout.addStretch()  # 남은 공간을 채움
+
+        settings_groupbox = QGroupBox("설정")
+        settings_layout = QVBoxLayout()
+        settings_layout.addLayout(font_layout)
+        settings_layout.addWidget(font_size_caption)
+        settings_layout.addWidget(toggle_dark_mode)
+        settings_layout.addStretch()
+        settings_groupbox.setLayout(settings_layout)
+
+        password_groupbox = QGroupBox("암호")
+        password_layout = QVBoxLayout()
+        password_layout.addWidget(change_password_btn)
+        password_layout.addLayout(change_password_hint)
+        password_layout.addStretch()
+        password_groupbox.setLayout(password_layout)
+    
+        export_groupbox = QGroupBox("데이터 내보내기")
+        export_layout = QVBoxLayout()
+        export_layout.addWidget(data_export_caption)
+        export_layout.addLayout(export_btn_row1)
+        export_layout.addLayout(export_btn_row2)
+        export_layout.addStretch()
+        export_groupbox.setLayout(export_layout)
+
+        import_groupbox = QGroupBox("데이터 가져오기")
+        import_layout = QVBoxLayout()
+        import_layout.addWidget(import_caption)
+        import_layout.addLayout(import_btn_row1)
+        import_layout.addStretch()
+        import_groupbox.setLayout(import_layout)
+
+        right_layout.addWidget(settings_groupbox)
+        right_layout.addWidget(password_groupbox)
+        right_layout.addWidget(export_groupbox)
+        right_layout.addWidget(import_groupbox) 
+        right_layout.addStretch()
         layout.addLayout(right_layout, 1)
 
     def change_font_size(self, size_str):
