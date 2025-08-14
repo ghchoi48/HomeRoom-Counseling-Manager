@@ -15,6 +15,7 @@ class DatabaseWorker(QObject):
     counsel_record_ready = Signal(dict)
     operation_success = Signal(str, object)  # 작업 종류와 결과 데이터를 전달
     operation_error = Signal(str)
+    import_students_data_ready = Signal(str)
 
     def __init__(self):
         super().__init__()
@@ -172,6 +173,13 @@ class DatabaseWorker(QObject):
             self.operation_success.emit("export", f"나이스 등록용 상담 파일이 성공적으로 내보내졌습니다.\n저장 위치: {file_path}")
         else:
             self.operation_error.emit("나이스 등록용 상담 파일 내보내기에 실패했습니다.")
+
+    @Slot(str)
+    def import_students_data(self, file_path):
+        if self.db.import_csv_to_students(file_path):
+            self.operation_success.emit("import", f"학생 정보를 성공적으로 가져왔습니다.")
+        else:
+            self.operation_error.emit("학생 정보 가져오기에 실패했습니다.\n동명이인이 있는지 확인하세요.")
 
     def close_connection(self):
         """워커의 데이터베이스 연결을 닫습니다."""

@@ -43,7 +43,8 @@ class MainApp(QMainWindow):
         self.db_worker.operation_success.connect(self.handle_db_operation_success)
         self.db_worker.operation_error.connect(self.handle_db_operation_error)
         self.update_student_data_signal.connect(self.db_worker.update_student)
-        
+        self.db_worker.import_students_data_ready.connect(self.db_worker.import_students_data)
+
         #탭 UI 구현
         self.tabs = QTabWidget()
         self.setCentralWidget(self.tabs)
@@ -210,6 +211,9 @@ class MainApp(QMainWindow):
                 self.db_thread.start()
         elif operation_type == "export":
             QMessageBox.information(self, "성공", data)
+        elif operation_type == "import":
+            QMessageBox.information(self, "성공", f"학생 정보가 추가되었습니다.")
+            self.refresh_student_list()
         self.db_thread.quit() # 작업 완료 후 스레드 종료
         self.db_thread.wait()
 
@@ -618,6 +622,10 @@ class MainApp(QMainWindow):
         export_btn_row2.addWidget(self.end_date_edit)
         export_btn_row2.addWidget(btn_export_counseling_for_neis)
         export_btn_row2.addStretch()
+
+        # CSV 가져오기 섹션
+        import_students_btn = QPushButton("학생 정보 가져오기")
+        import_students_btn.clicked.connect(self.import_students_data)
         
         # 글꼴 크기 설정
         settings_label = QLabel("설정")
@@ -667,6 +675,7 @@ class MainApp(QMainWindow):
         right_layout.addWidget(data_export_caption)
         right_layout.addLayout(export_btn_row1)
         right_layout.addLayout(export_btn_row2)
+        right_layout.addWidget(import_students_btn)
         right_layout.addStretch()  # 남은 공간을 채움
         layout.addLayout(right_layout, 1)
 
@@ -674,6 +683,19 @@ class MainApp(QMainWindow):
         size = int(size_str)
         set_font_size(size)
         self.theme_manager.set_font_size(size)
+
+    def import_students_data(self):
+        # 학생 정보 CSV 가져오기
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, 
+            "학생 정보 가져오기", 
+            "", 
+            "CSV 파일 (*.csv)"
+        )
+        
+        if file_path:
+            self.db_worker.import_students_data_ready.emit(file_path)
+            self.db_thread.start()
 
     def export_all_data(self):
         # 전체 데이터 CSV 내보내기

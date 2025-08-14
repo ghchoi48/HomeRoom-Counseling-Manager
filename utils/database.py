@@ -36,9 +36,6 @@ class Database:
 
     def close_connection(self):
         """데이터베이스 연결을 닫습니다."""
-        # 이 클래스는 연결을 유지하지 않으므로 아무것도 하지 않습니다.
-        # get_connection()이 컨텍스트 관리자를 사용하여 매번 연결을 열고 닫습니다.
-        # 그러나 app.aboutToQuit 시그널에 연결하기 위해 이 메서드를 추가합니다.
         pass
 
     def _write_csv(self, file_path, headers, data):
@@ -517,4 +514,20 @@ class Database:
                 return cursor.rowcount > 0
         except sqlite3.Error as e:
             print(f"ID로 상담 기록 삭제 오류: {e}")
+            return False
+    
+    def import_csv_to_students(self, csv_path):
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                with open(csv_path, 'r', encoding='utf-8') as csvfile:
+                    reader = csv.reader(csvfile)
+                    next(reader)
+                    cursor.executemany('''
+                        INSERT INTO students (name, phone, gender, birth_date, guardian_phone1, guardian_phone2, memo) VALUES (?, ?, ?, ?, ?, ?, ?);
+                    ''', reader)
+                    conn.commit()
+                    return True
+        except sqlite3.Error as e:
+            print(f"CSV 파일 읽기 오류: {e}")
             return False
