@@ -624,9 +624,18 @@ class MainApp(QMainWindow):
         export_btn_row2.addStretch()
 
         # CSV 가져오기 섹션
+        import_title = QLabel("데이터 가져오기")
+        import_title.setProperty("class", "subtitle")
+        import_caption = QLabel("데이터를 CSV 파일로 가져올 수 있습니다.")
+        import_btn_row1 = QHBoxLayout()
         import_students_btn = QPushButton("학생 정보 가져오기")
         import_students_btn.clicked.connect(self.import_students_data)
-        
+        export_form_students_btn = QPushButton("학생 정보 일괄 등록 양식")
+        export_form_students_btn.clicked.connect(self.export_form_students_csv)
+
+        import_btn_row1.addWidget(export_form_students_btn)
+        import_btn_row1.addWidget(import_students_btn)
+
         # 글꼴 크기 설정
         settings_label = QLabel("설정")
         settings_label.setProperty("class", "subtitle")
@@ -675,7 +684,10 @@ class MainApp(QMainWindow):
         right_layout.addWidget(data_export_caption)
         right_layout.addLayout(export_btn_row1)
         right_layout.addLayout(export_btn_row2)
-        right_layout.addWidget(import_students_btn)
+        right_layout.addSpacing(20)
+        right_layout.addWidget(import_title)
+        right_layout.addWidget(import_caption)
+        right_layout.addLayout(import_btn_row1)
         right_layout.addStretch()  # 남은 공간을 채움
         layout.addLayout(right_layout, 1)
 
@@ -695,6 +707,18 @@ class MainApp(QMainWindow):
         
         if file_path:
             self.db_worker.import_students_data_ready.emit(file_path)
+            self.db_thread.start()
+
+    def export_form_students_csv(self):
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, 
+            "학생 정보 일괄 등록 양식 저장", 
+            "학생정보_일괄등록.csv", 
+            "CSV 파일 (*.csv)"
+        )
+
+        if file_path:
+            self.db_worker.export_form_students_csv(file_path)
             self.db_thread.start()
 
     def export_all_data(self):

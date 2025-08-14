@@ -162,6 +162,14 @@ class Database:
         except sqlite3.Error as e:
             print(f"상담 기록 CSV 내보내기 오류: {e}")
             return False
+        
+    def export_form_students_csv(self, file_path):
+        try:
+            headers = ['이름', '연락처', '성별', '생년월일', '보호자 연락처1', '보호자 연락처2', '메모']
+            return self._write_csv(file_path, headers, [])
+        except IOError as e:
+            print(f"학생 정보 일괄 등록 양식 저장 오류: {e}")
+            return False
 
     def init_database(self):
         try:
