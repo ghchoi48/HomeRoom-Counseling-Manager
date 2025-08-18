@@ -4,6 +4,7 @@ import csv
 from datetime import datetime
 from contextlib import contextmanager
 from utils.helpers import get_base_dir
+from utils.encoding_detector import detect_encoding
 
 BASE_DIR = get_base_dir()
 
@@ -166,7 +167,10 @@ class Database:
     def export_form_students_csv(self, file_path):
         try:
             headers = ['이름', '연락처', '성별', '생년월일', '보호자 연락처1', '보호자 연락처2', '메모']
-            return self._write_csv(file_path, headers, [])
+            with open(file_path, 'w', encoding='utf-8-sig', newline='') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(headers)
+            return True
         except IOError as e:
             print(f"학생 정보 일괄 등록 양식 저장 오류: {e}")
             return False
@@ -525,15 +529,40 @@ class Database:
             return False
     
     def import_csv_to_students(self, csv_path):
+        required_columns = ["이름", "연락처", "성별", "생년월일", "보호자 연락처1", "보호자 연락처2", "메모"]
+        names_seen = set()
+        rows_to_insert = []
         try:
             with self.get_connection() as conn:
                 cursor = conn.cursor()
-                with open(csv_path, 'r', encoding='utf-8') as csvfile:
+                with open(csv_path, 'r', encoding=detect_encoding(csv_path)) as csvfile:
                     reader = csv.reader(csvfile)
-                    next(reader)
+                    try:
+                        header = next(reader)
+                    except StopIteration:
+                        print(f"빈 파일 입니다.")
+                        return False
+                    if header and header[0].startswith('\ufeff'):
+                        header[0] = header[0].replace('\ufeff', '')
+                    if header != required_columns:
+                        print(f"CSV 파일의 헤더가 올바르지 않습니다. 필요한 열: {', '.join(required_columns)}")
+                        return False
+                    for i, row in enumerate(reader, start=2):
+                        if len(row) != len(required_columns):
+                            print(f"CSV 파일의 {i}번째 행에 열의 수가 올바르지 않습니다.")
+                            return False
+                        name = row[0].strip()
+                        if not name:
+                            print(f"CSV 파일의 {i}번째 행에 이름이 비어 있습니다.")
+                            return False
+                        if name in names_seen:
+                            print(f"CSV 파일의 {i}번째 행에 중복된 이름이 있습니다: {name}")
+                            return False
+                        names_seen.add(name)
+                        rows_to_insert.append(row)
                     cursor.executemany('''
                         INSERT INTO students (name, phone, gender, birth_date, guardian_phone1, guardian_phone2, memo) VALUES (?, ?, ?, ?, ?, ?, ?);
-                    ''', reader)
+                    ''', rows_to_insert)
                     conn.commit()
                     return True
         except sqlite3.Error as e:
