@@ -14,9 +14,9 @@
 
 ## 사용된 라이브러리
 
--   Pyside6 (QT)
--   Darkdetect (Alberto Sottile)
--   Requests
+-   Pyside6 (QT): 프론트엔드 구성
+-   Darkdetect (Alberto Sottile): 다크모드 자동화
+-   Requests: 업데이트 체크 기능 구현
 
 ## 설치 방법
 
